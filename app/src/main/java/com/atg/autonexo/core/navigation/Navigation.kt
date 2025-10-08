@@ -1,21 +1,23 @@
-package com.atg.autonexo.core.navigation
+﻿package com.atg.autonexo.core.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
-import com.atg.autonexo.features.auth.presentation.forgotpassword.ForgotPasswordScreen
-import com.atg.autonexo.features.auth.presentation.login.LoginScreen
-import com.atg.autonexo.features.auth.presentation.otp.OtpVerificationScreen
-import com.atg.autonexo.features.auth.presentation.register.RegisterWorkshopScreen
-import com.atg.autonexo.features.auth.presentation.resetpassword.ResetPasswordScreen
-import com.atg.autonexo.features.home.presentation.home.HomeScreen
-import com.atg.autonexo.features.home.presentation.profile.EditProfileScreen
-import com.atg.autonexo.features.home.presentation.profile.NewPasswordScreen
-import com.atg.autonexo.features.home.presentation.profile.ProfileScreen
+import com.atg.autonexo.features.iam.presentation.forgotpassword.ForgotPasswordScreen
+import com.atg.autonexo.features.iam.presentation.login.LoginScreen
+import com.atg.autonexo.features.iam.presentation.otp.OtpVerificationScreen
+import com.atg.autonexo.features.iam.presentation.register.RegisterWorkshopScreen
+import com.atg.autonexo.features.iam.presentation.resetpassword.ResetPasswordScreen
+import com.atg.autonexo.features.matchingbooking.presentation.dashboard.DashboardScreen
+import com.atg.autonexo.features.iam.presentation.profile.EditProfileScreen
+import com.atg.autonexo.features.iam.presentation.profile.NewPasswordScreen
+import com.atg.autonexo.features.iam.presentation.profile.ProfileScreen
+import com.atg.autonexo.features.iam.presentation.profile.ProfileViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestListScreen
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
 
@@ -74,7 +76,7 @@ fun AppNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToOtp = { phone ->
+                onNavigateToOtp = { phone: String ->
                     navController.navigate("auth/otp_verification/$phone") {
                         popUpTo(Route.Auth.ForgotPassword.route) {
                             inclusive = false
@@ -121,7 +123,7 @@ fun AppNavigation(
         
         // Ruta principal Home
         composable(Route.Home.route) {
-            HomeScreen(navController = navController)
+            DashboardScreen(navController = navController)
         }
         
         // Rutas de Profile
@@ -138,7 +140,7 @@ fun AppNavigation(
         
         composable("edit_profile") {
             val previousBackStackEntry = navController.previousBackStackEntry
-            val profileViewModel = androidx.hilt.navigation.compose.hiltViewModel<com.atg.autonexo.features.home.presentation.profile.ProfileViewModel>(previousBackStackEntry!!)
+            val profileViewModel = hiltViewModel<ProfileViewModel>(previousBackStackEntry!!)
             val profileState = profileViewModel.uiState.collectAsState().value
             
             EditProfileScreen(
@@ -171,10 +173,10 @@ fun AppNavigation(
         // Rutas de Matching & Booking
         composable(Route.Request.route) {
             RequestListScreen(
-                onRequestClick = { requestId ->
+                onRequestClick = { _ ->
                     // TODO: Navegar a detalles del request
                 },
-                onOfferClick = { requestId ->
+                onOfferClick = { _ ->
                     // TODO: Mostrar dialog de offer
                 }
             )

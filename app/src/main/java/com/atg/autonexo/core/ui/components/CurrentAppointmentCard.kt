@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.atg.autonexo.features.home.presentation.home.models.AppointmentUi
+import com.atg.autonexo.features.matchingbooking.presentation.dashboard.models.AppointmentUi
 
 @Composable
 fun CurrentAppointmentCard(
