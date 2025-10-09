@@ -5,6 +5,9 @@ sealed class Route(val route: String) {
     object Home : Route("home")
     object Profile : Route("profile")
     object Request : Route("request")
+    object RequestDetail : Route("request/{requestId}") {
+        fun createRoute(requestId: String) = "request/$requestId"
+    }
     object Offer : Route("offer")
     object Workshop : Route("workshop")
     object Service : Route("service")
