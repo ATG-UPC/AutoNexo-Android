@@ -29,6 +29,8 @@ import com.atg.autonexo.features.matchingbooking.presentation.request.RequestDet
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 
 @Composable
 fun AppNavigation(
@@ -331,7 +333,19 @@ fun AppNavigation(
                         }
                         else -> navController.navigate(route)
                     }
+                onOfferClick = { requestId ->
+                    navController.navigate(Route.RequestDetail.createRoute(requestId))
                 }
+            )
+        }
+        composable(
+            route = Route.RequestDetail.route,
+            arguments = listOf(navArgument("requestId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("requestId") ?: ""
+            RequestDetailScreen(
+                requestId = id,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         
