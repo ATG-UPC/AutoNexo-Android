@@ -326,8 +326,9 @@ fun RequestCard(
 
                 // Imagen del auto con auto1/auto2 si existen
                 val context = LocalContext.current
-                val name = if (request.serviceRequestId.hashCode() % 2 == 0) "auto1" else "auto2"
-                val imageId = context.resources.getIdentifier(name, "drawable", context.packageName)
+                val resolved = ImageResolver.resolveNameFromDescription(request.vehicleDescription)
+                    ?: if (request.serviceRequestId.hashCode() % 2 == 0) "auto1" else "auto2"
+                val imageId = context.resources.getIdentifier(resolved, "drawable", context.packageName)
                 if (imageId != 0) {
                     androidx.compose.foundation.Image(
                         painter = painterResource(id = imageId),

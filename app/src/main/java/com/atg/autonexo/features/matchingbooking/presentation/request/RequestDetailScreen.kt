@@ -62,11 +62,9 @@ fun RequestDetailScreen(
 
             // Imagen del auto: intenta cargar auto1/auto2; si no existen, usa ícono
             val context = LocalContext.current
-            val imageRes = run {
-                val name = if (requestId.hashCode() % 2 == 0) "auto1" else "auto2"
-                val id = context.resources.getIdentifier(name, "drawable", context.packageName)
-                id
-            }
+            val fallback = if (requestId.hashCode() % 2 == 0) "auto1" else "auto2"
+            val resolvedName = ImageResolver.resolveNameFromDescription("") ?: fallback
+            val imageRes = context.resources.getIdentifier(resolvedName, "drawable", context.packageName)
 
             Card(
                 modifier = Modifier
@@ -92,7 +90,7 @@ fun RequestDetailScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack, // placeholder; replaced below in list screen too
+                            imageVector = androidx.compose.material.icons.Icons.Default.DirectionsCar,
                             contentDescription = null,
                             tint = Color(0xFF8E8E8E)
                         )
