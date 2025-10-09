@@ -46,7 +46,7 @@ fun DashboardScreen(
                     navController.navigate(com.atg.autonexo.core.navigation.Route.Pro.route)
                 },
                 onNavigateToSupport = {
-                    // TODO: Navegar a soporte
+                    navController.navigate(com.atg.autonexo.core.navigation.Route.Support.route)
                 },
                 onNavigateToTerms = {
                     // TODO: Navegar a términos

@@ -14,6 +14,10 @@ sealed class Route(val route: String) {
     object WorkshopDetailMember : Route("workshop/detail_member")
     object Service : Route("service")
 
+    object Support: Route("support"){
+        object Contact : Route("support/contact")
+    }
+
     // Rutas Secundarias
     object Pro : Route("pro")
     object Premiun : Route("premiun")
@@ -37,5 +41,11 @@ sealed class Route(val route: String) {
         object Detail : Route("vehicle/{vehicleId}") {
             fun createRoute(vehicleId: String) = "vehicle/$vehicleId"
         }
+    }
+
+    // Rutas de Service Order
+    object ServiceOrder : Route("service") {
+        object List : Route("service")
+        object Register : Route("service/register")
     }
 }
