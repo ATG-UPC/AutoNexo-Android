@@ -22,7 +22,9 @@ import com.atg.autonexo.core.ui.theme.AppTheme
 
 // TODO: Subscribe screen
 @Composable
-fun SubscribePro(){
+fun SubscribePro(
+    onNavigateBack: () -> Unit,
+){
     var selectedOption by remember { mutableStateOf("Monthly") }
 
     Column(
@@ -33,7 +35,7 @@ fun SubscribePro(){
         AuthCurvedHeader(
             title = "Plans",
             navigationIcon = androidx.compose.material.icons.Icons.Default.ArrowBack,
-            onNavigationClick = { /* Acción volver */ }
+            onNavigationClick = onNavigateBack
         )
 
         PlanTypeSelector(
@@ -77,6 +79,6 @@ fun SubscribePro(){
 @Composable
 fun SubscribeProPreview(){
     AppTheme {
-        SubscribePro()
+        SubscribePro(onNavigateBack = { /* No-op para preview */ })
     }
 }

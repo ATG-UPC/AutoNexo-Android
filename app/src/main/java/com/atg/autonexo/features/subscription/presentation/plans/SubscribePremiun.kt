@@ -21,7 +21,9 @@ import com.atg.autonexo.core.ui.components.AuthCurvedHeader
 import com.atg.autonexo.core.ui.theme.AppTheme
 
 @Composable
-fun SubscribePremiun(){
+fun SubscribePremiun(
+    onNavigateBack: () -> Unit,
+){
     var selectedOption by remember { mutableStateOf("Monthly") }
 
     Column(
@@ -32,7 +34,7 @@ fun SubscribePremiun(){
         AuthCurvedHeader(
             title = "Plans",
             navigationIcon = androidx.compose.material.icons.Icons.Default.ArrowBack,
-            onNavigationClick = { /* Acción volver */ }
+            onNavigationClick = onNavigateBack
         )
 
         PlanTypeSelector(
@@ -78,6 +80,8 @@ fun SubscribePremiun(){
 @Composable
 fun SuscribePremiunPreview(){
     AppTheme {
-        SubscribePremiun()
+        SubscribePremiun(
+            onNavigateBack = { /* No-op para preview */ }
+        )
     }
 }
