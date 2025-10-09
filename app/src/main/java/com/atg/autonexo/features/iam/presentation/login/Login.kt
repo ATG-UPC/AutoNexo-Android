@@ -42,6 +42,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     // Escuchar eventos del ViewModel
     LaunchedEffect(Unit) {
@@ -52,15 +53,31 @@ fun LoginScreen(
         }
     }
     
-    LoginContent(
-        uiState = uiState,
-        onEmailChange = viewModel::updateEmail,
-        onPasswordChange = viewModel::updatePassword,
-        onLoginClick = viewModel::login,
-        onRegisterClick = onNavigateToRegister,
-        onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
-        onForgotPasswordClick = onNavigateToForgotPassword
-    )
+    // Mostrar error en Snackbar
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearError()
+        }
+    }
+    
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        LoginContent(
+            uiState = uiState,
+            onEmailChange = viewModel::updateEmail,
+            onPasswordChange = viewModel::updatePassword,
+            onLoginClick = viewModel::login,
+            onRegisterClick = onNavigateToRegister,
+            onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
+            onForgotPasswordClick = onNavigateToForgotPassword,
+            modifier = Modifier.padding(paddingValues)
+        )
+    }
 }
 
 @Composable
@@ -71,10 +88,11 @@ private fun LoginContent(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
     onTogglePasswordVisibility: () -> Unit,
-    onForgotPasswordClick: () -> Unit
+    onForgotPasswordClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(Color.White)
             .verticalScroll(rememberScrollState())
@@ -433,7 +451,8 @@ private fun LoginScreenPreview() {
             onLoginClick = {},
             onRegisterClick = {},
             onTogglePasswordVisibility = {},
-            onForgotPasswordClick = {}
+            onForgotPasswordClick = {},
+            modifier = Modifier
         )
     }
 }

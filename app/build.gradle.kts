@@ -79,6 +79,10 @@ dependencies {
     // Retrofit
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+    
+    // OkHttp
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
 
     // ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.compose)

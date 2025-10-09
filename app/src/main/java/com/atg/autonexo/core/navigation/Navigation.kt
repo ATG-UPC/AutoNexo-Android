@@ -11,6 +11,7 @@ import androidx.navigation.NavType
 import com.atg.autonexo.features.iam.presentation.forgotpassword.ForgotPasswordScreen
 import com.atg.autonexo.features.iam.presentation.login.LoginScreen
 import com.atg.autonexo.features.iam.presentation.otp.OtpVerificationScreen
+import com.atg.autonexo.features.iam.presentation.register.RegisterScreen
 import com.atg.autonexo.features.iam.presentation.register.RegisterWorkshopScreen
 import com.atg.autonexo.features.iam.presentation.resetpassword.ResetPasswordScreen
 import com.atg.autonexo.features.workshop.presentation.register.WorkshopRegistrationStep1Screen
@@ -71,22 +72,14 @@ fun AppNavigation(
         }
         
         composable(Route.Auth.Register.route) {
-            RegisterWorkshopScreen(
+            RegisterScreen(
                 onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = {
+                    // Después del registro, redirigir al login
                     navController.navigate(Route.Auth.Login.route) {
-                        popUpTo(Route.Auth.Register.route) {
-                            inclusive = false
-                        }
-                    }
-                },
-                onNavigateToCreateWorkshop = {
-                    navController.navigate(Route.Auth.WorkshopRegistrationStep1.route) {
-                        popUpTo(Route.Auth.Register.route) { inclusive = false }
-                    }
-                },
-                onNavigateToJoinWorkshop = {
-                    navController.navigate(Route.Auth.WorkshopCodeJoin.route) {
-                        popUpTo(Route.Auth.Register.route) { inclusive = false }
+                        popUpTo(Route.Auth.Register.route) { inclusive = true }
                     }
                 }
             )

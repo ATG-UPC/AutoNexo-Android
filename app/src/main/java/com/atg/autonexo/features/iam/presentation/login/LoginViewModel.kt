@@ -2,6 +2,8 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atg.autonexo.features.iam.domain.models.AuthResult
+import com.atg.autonexo.features.iam.domain.repositories.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,8 +30,7 @@ sealed class LoginEvent {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    // TODO: Inyectar repositorio cuando esté listo
-    // private val authRepository: AuthRepository
+    private val authRepository: AuthRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -93,36 +94,29 @@ class LoginViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 emailError = null,
-                passwordError = null
+                passwordError = null,
+                errorMessage = null
             )
             
-            try {
-                // TODO: Implementar lógica de login cuando el repositorio esté listo
-                // val result = authRepository.login(_uiState.value.email, _uiState.value.password)
-                
-                // Simulación temporal
-                kotlinx.coroutines.delay(1000)
-                
-                // Simulamos login exitoso
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                _events.emit(LoginEvent.LoginSuccess)
-                
-                // TODO: Cuando se implemente el repositorio real, usar esto:
-                // if (result.isSuccess) {
-                //     _uiState.value = _uiState.value.copy(isLoading = false)
-                //     _events.emit(LoginEvent.LoginSuccess)
-                // } else {
-                //     _uiState.value = _uiState.value.copy(
-                //         isLoading = false,
-                //         errorMessage = result.errorMessage
-                //     )
-                // }
-                
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = e.message ?: "Error desconocido"
-                )
+            val result = authRepository.signIn(
+                email = _uiState.value.email,
+                password = _uiState.value.password
+            )
+            
+            when (result) {
+                is AuthResult.Success -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    _events.emit(LoginEvent.LoginSuccess)
+                }
+                is AuthResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = result.message
+                    )
+                }
+                is AuthResult.Loading -> {
+                    // No debería llegar aquí
+                }
             }
         }
     }
