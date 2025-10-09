@@ -66,4 +66,8 @@ class DashboardViewModel @Inject constructor(
     fun isWorkshopManager(): Boolean {
         return userPreferences.isWorkshopManager()
     }
+
+    fun hasWorkshop(): Boolean {
+        return userPreferences.hasWorkshop()
+    }
 }

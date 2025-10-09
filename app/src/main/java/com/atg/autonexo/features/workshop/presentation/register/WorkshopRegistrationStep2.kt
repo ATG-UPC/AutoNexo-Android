@@ -18,6 +18,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.atg.autonexo.core.ui.components.SuccessDialog
+import com.atg.autonexo.core.ui.components.ErrorDialog
 import com.atg.autonexo.features.iam.presentation.components.*
 
 @Composable
@@ -31,7 +33,7 @@ fun WorkshopRegistrationStep2Screen(
     // Show dialogs
     if (uiState.showSuccessDialog) {
         SuccessDialog(
-            message = "The workshop was registered successfully.",
+            message = "The workshop was created successfully.",
             onDismiss = {
                 viewModel.dismissSuccessDialog()
                 onSuccess()
@@ -41,6 +43,7 @@ fun WorkshopRegistrationStep2Screen(
     
     if (uiState.showErrorDialog) {
         ErrorDialog(
+            message = uiState.errorMessage ?: "There was an error during the process.",
             onDismiss = viewModel::dismissErrorDialog
         )
     }
@@ -236,28 +239,54 @@ private fun WorkshopRegistrationStep2Content(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Register Button
-            Button(
-                onClick = onRegisterClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4682B4),
-                    disabledContainerColor = Color(0xFFCCCCCC)
-                ),
-                enabled = uiState.isStep1Valid && uiState.isStep2Valid && !uiState.isLoading
+            // Save and Cancel Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
+                // Save Button
+                Button(
+                    onClick = onRegisterClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4682B4),
+                        disabledContainerColor = Color(0xFFCCCCCC)
+                    ),
+                    enabled = !uiState.isLoading
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = "Save",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+                
+                // Cancel Button
+                Button(
+                    onClick = onBackClick,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2E3C47)
+                    ),
+                    enabled = !uiState.isLoading
+                ) {
                     Text(
-                        text = "Register",
+                        text = "Cancel",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White

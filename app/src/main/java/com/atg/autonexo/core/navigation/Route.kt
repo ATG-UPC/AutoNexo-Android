@@ -7,6 +7,8 @@ sealed class Route(val route: String) {
     object Request : Route("request")
     object Offer : Route("offer")
     object Workshop : Route("workshop")
+    object WorkshopDetailOwner : Route("workshop/detail_owner")
+    object WorkshopDetailMember : Route("workshop/detail_member")
     object Service : Route("service")
 
     // Rutas Secundarias
@@ -22,6 +24,8 @@ sealed class Route(val route: String) {
         object ResetPassword : Route("auth/reset_password")
         object WorkshopRegistrationStep1 : Route("auth/workshop_registration_step1")
         object WorkshopRegistrationStep2 : Route("auth/workshop_registration_step2")
+        object WorkshopEditStep1 : Route("auth/workshop_edit_step1")
+        object WorkshopEditStep2 : Route("auth/workshop_edit_step2")
         object WorkshopCodeJoin : Route("auth/workshop_code_join")
     }
     
