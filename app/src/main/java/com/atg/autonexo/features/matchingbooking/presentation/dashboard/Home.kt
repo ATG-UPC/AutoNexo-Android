@@ -43,7 +43,7 @@ fun DashboardScreen(
                     // TODO: Navegar a pagos
                 },
                 onNavigateToSupport = {
-                    // TODO: Navegar a soporte
+                    navController.navigate(com.atg.autonexo.core.navigation.Route.Support.route)
                 },
                 onNavigateToTerms = {
                     // TODO: Navegar a términos

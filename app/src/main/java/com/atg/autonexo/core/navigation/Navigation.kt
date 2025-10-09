@@ -19,6 +19,7 @@ import com.atg.autonexo.features.iam.presentation.profile.NewPasswordScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestListScreen
+import com.atg.autonexo.features.trust.presentation.support.Support
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
 
 @Composable
@@ -125,7 +126,24 @@ fun AppNavigation(
         composable(Route.Home.route) {
             DashboardScreen(navController = navController)
         }
-        
+
+        composable (Route.Support.route){
+            Support(
+                onFaqClick = {},
+                onCallClick = {},
+                onTermsClick = {},
+                onTutorialClick = {},
+                onMailClick = {navController.navigate(Route.Support.Contact.route){
+                    popUpTo(Route.Support.route){
+                        inclusive = false
+                    }
+                } },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         // Rutas de Profile
         composable(Route.Profile.route) {
             ProfileScreen(
