@@ -16,14 +16,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.atg.autonexo.core.ui.components.BottomArcShape
+import com.atg.autonexo.core.ui.components.BottomNavBar
 import com.atg.autonexo.features.matchingbooking.presentation.request.models.ServiceRequestUi
 
 @Composable
 fun RequestDetailScreen(
     requestId: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigate: (String) -> Unit
 ) {
-    Scaffold { padding ->
+    Scaffold(
+        bottomBar = {
+            BottomNavBar(
+                currentRoute = "request",
+                onNavigate = onNavigate
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

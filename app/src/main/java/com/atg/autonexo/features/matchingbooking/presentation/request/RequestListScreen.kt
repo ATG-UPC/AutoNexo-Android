@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.atg.autonexo.core.ui.components.BottomArcShape
+import com.atg.autonexo.core.ui.components.BottomNavBar
 import com.atg.autonexo.features.matchingbooking.presentation.offer.MakeOfferDialog
 import com.atg.autonexo.features.matchingbooking.presentation.request.models.ServiceRequestUi
 
@@ -33,6 +34,8 @@ import com.atg.autonexo.features.matchingbooking.presentation.request.models.Ser
 fun RequestListScreen(
     onRequestClick: (String) -> Unit,
     onOfferClick: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+    onNavigate: (String) -> Unit,
     viewModel: RequestListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -42,7 +45,13 @@ fun RequestListScreen(
     var selectedRequestId by rememberSaveable { mutableStateOf("") }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            BottomNavBar(
+                currentRoute = "request",
+                onNavigate = onNavigate
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -71,7 +80,7 @@ fun RequestListScreen(
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { /* TODO: Navigate back */ }) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",

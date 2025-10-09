@@ -295,6 +295,19 @@ fun AppNavigation(
                 },
                 onOfferClick = { _ ->
                     // TODO: Mostrar dialog de offer
+                },
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Home.route,
+                        Route.Request.route,
+                        Route.Offer.route,
+                        Route.Workshop.route,
+                        Route.Service.route -> navController.navigate(route) {
+                            popUpTo(Route.Home.route)
+                        }
+                        else -> navController.navigate(route)
+                    }
                 }
             )
         }
@@ -306,7 +319,19 @@ fun AppNavigation(
             val id = backStackEntry.arguments?.getString("requestId") ?: ""
             RequestDetailScreen(
                 requestId = id,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Home.route,
+                        Route.Request.route,
+                        Route.Offer.route,
+                        Route.Workshop.route,
+                        Route.Service.route -> navController.navigate(route) {
+                            popUpTo(Route.Home.route)
+                        }
+                        else -> navController.navigate(route)
+                    }
+                }
             )
         }
         
