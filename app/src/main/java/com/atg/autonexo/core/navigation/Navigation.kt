@@ -72,9 +72,14 @@ fun AppNavigation(
                         }
                     }
                 },
-                onNavigateToHome = {
-                    navController.navigate(Route.Home.route) {
-                        popUpTo(0) { inclusive = true }
+                onNavigateToCreateWorkshop = {
+                    navController.navigate(Route.Auth.WorkshopRegistrationStep1.route) {
+                        popUpTo(Route.Auth.Register.route) { inclusive = false }
+                    }
+                },
+                onNavigateToJoinWorkshop = {
+                    navController.navigate(Route.Auth.WorkshopCodeJoin.route) {
+                        popUpTo(Route.Auth.Register.route) { inclusive = false }
                     }
                 }
             )
