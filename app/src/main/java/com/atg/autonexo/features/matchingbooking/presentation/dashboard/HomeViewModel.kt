@@ -2,6 +2,7 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atg.autonexo.core.data.UserPreferences
 import com.atg.autonexo.features.matchingbooking.presentation.dashboard.models.AppointmentUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,13 +12,23 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class HomeUiState(
+    val userName: String = "Usuario",
+    val selectedMonth: String = "October",
+    val selectedYear: String = "2025",
+    val currentAppointment: AppointmentUi? = null,
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
+
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
+    private val userPreferences: UserPreferences
     // TODO: Inyectar repositorios cuando estén listos
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DashboardUiState())
-    val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
         loadMockData()
@@ -50,5 +61,9 @@ class DashboardViewModel @Inject constructor(
 
     fun onMonthClick() {
         // TODO: Implementar selector de mes
+    }
+    
+    fun isWorkshopManager(): Boolean {
+        return userPreferences.isWorkshopManager()
     }
 }

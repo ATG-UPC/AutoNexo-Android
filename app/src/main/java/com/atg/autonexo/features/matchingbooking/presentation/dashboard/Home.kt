@@ -71,9 +71,20 @@ fun DashboardScreen(
                 BottomNavBar(
                     currentRoute = navController.currentDestination?.route ?: "home",
                     onNavigate = { route ->
-                        navController.navigate(route) {
-                            launchSingleTop = true
-                            restoreState = true
+                        if (route == "workshop") {
+                            // Verificar si es workshop manager
+                            if (viewModel.isWorkshopManager()) {
+                                // Es manager, ir a crear taller
+                                navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopRegistrationStep1.route)
+                            } else {
+                                // No es manager, ir a introducir código
+                                navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopCodeJoin.route)
+                            }
+                        } else {
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     }
                 )
