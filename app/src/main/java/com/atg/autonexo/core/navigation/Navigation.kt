@@ -26,6 +26,8 @@ import com.atg.autonexo.features.iam.presentation.profile.ProfileViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.dashboard.DashboardViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestListScreen
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestDetailScreen
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
@@ -73,9 +75,14 @@ fun AppNavigation(
                         }
                     }
                 },
-                onNavigateToHome = {
-                    navController.navigate(Route.Home.route) {
-                        popUpTo(0) { inclusive = true }
+                onNavigateToCreateWorkshop = {
+                    navController.navigate(Route.Auth.WorkshopRegistrationStep1.route) {
+                        popUpTo(Route.Auth.Register.route) { inclusive = false }
+                    }
+                },
+                onNavigateToJoinWorkshop = {
+                    navController.navigate(Route.Auth.WorkshopCodeJoin.route) {
+                        popUpTo(Route.Auth.Register.route) { inclusive = false }
                     }
                 }
             )
@@ -288,6 +295,44 @@ fun AppNavigation(
                 onRequestClick = { requestId ->
                     navController.navigate(Route.RequestDetail.createRoute(requestId))
                 },
+                onOfferClick = { _ ->
+                    // TODO: Mostrar dialog de offer
+                },
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Home.route,
+                        Route.Request.route,
+                        Route.Offer.route,
+                        Route.Workshop.route,
+                        Route.Service.route -> navController.navigate(route) {
+                            popUpTo(Route.Home.route)
+                        }
+                        else -> navController.navigate(route)
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Route.RequestDetail.route,
+            arguments = listOf(navArgument("requestId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("requestId") ?: ""
+            RequestDetailScreen(
+                requestId = id,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Home.route,
+                        Route.Request.route,
+                        Route.Offer.route,
+                        Route.Workshop.route,
+                        Route.Service.route -> navController.navigate(route) {
+                            popUpTo(Route.Home.route)
+                        }
+                        else -> navController.navigate(route)
+                    }
                 onOfferClick = { requestId ->
                     navController.navigate(Route.RequestDetail.createRoute(requestId))
                 }

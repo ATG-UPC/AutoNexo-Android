@@ -37,7 +37,8 @@ import com.atg.autonexo.features.iam.presentation.register.RegisterWorkshopUiSta
 @Composable
 fun RegisterWorkshopScreen(
     onNavigateBack: () -> Unit = {},
-    onNavigateToHome: () -> Unit = {},
+    onNavigateToCreateWorkshop: () -> Unit = {},
+    onNavigateToJoinWorkshop: () -> Unit = {},
     viewModel: RegisterWorkshopViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -47,7 +48,11 @@ fun RegisterWorkshopScreen(
         TermsAndConditionsDialog(
             onAccept = {
                 viewModel.acceptTermsAndRegister()
-                onNavigateToHome()
+                if (uiState.isWorkshopManager) {
+                    onNavigateToCreateWorkshop()
+                } else {
+                    onNavigateToJoinWorkshop()
+                }
             },
             onDismiss = viewModel::dismissTermsDialog
         )
