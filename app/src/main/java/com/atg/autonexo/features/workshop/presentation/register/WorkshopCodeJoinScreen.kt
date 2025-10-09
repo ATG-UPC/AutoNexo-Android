@@ -72,6 +72,8 @@ fun WorkshopCodeJoinScreen(
                 
                 // Simulate success
                 isLoading = false
+                // Persistir que ya tiene workshop (miembro)
+                // Nota: evitamos inyección aquí; lo haremos vía callback
                 onSuccess()
             } catch (e: Exception) {
                 isLoading = false

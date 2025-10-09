@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.atg.autonexo.core.ui.components.BottomArcShape
+import com.atg.autonexo.core.ui.components.SuccessDialog
+import com.atg.autonexo.core.ui.components.ErrorDialog
 
 @Composable
 fun EditProfileScreen(
@@ -36,23 +38,19 @@ fun EditProfileScreen(
     viewModel: EditProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.loadProfileData(fullName, email, phoneNumber)
         viewModel.events.collect { event ->
             when (event) {
                 is EditProfileEvent.SaveSuccess -> {
-                    snackbarHostState.showSnackbar("Perfil actualizado")
                     onSaveSuccess()
                 }
             }
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -310,6 +308,25 @@ fun EditProfileScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+    
+    // Diálogos de éxito y error
+    if (uiState.showSuccessDialog) {
+        SuccessDialog(
+            message = "The profile was edited successfully.",
+            onDismiss = {
+                viewModel.dismissSuccessDialog()
+            }
+        )
+    }
+    
+    if (uiState.showErrorDialog) {
+        ErrorDialog(
+            message = uiState.errorMessage,
+            onDismiss = {
+                viewModel.dismissErrorDialog()
+            }
+        )
     }
 }
 

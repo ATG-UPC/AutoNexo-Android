@@ -75,13 +75,26 @@ fun DashboardScreen(
                     currentRoute = navController.currentDestination?.route ?: "home",
                     onNavigate = { route ->
                         if (route == "workshop") {
-                            // Verificar si es workshop manager
-                            if (viewModel.isWorkshopManager()) {
-                                // Es manager, ir a crear taller
-                                navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopRegistrationStep1.route)
+                            // Si ya tiene workshop asociado, ir directo al detalle
+                            if (viewModel.hasWorkshop()) {
+                                if (viewModel.isWorkshopManager()) {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.WorkshopDetailOwner.route) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                } else {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.WorkshopDetailMember.route) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
                             } else {
-                                // No es manager, ir a introducir código
-                                navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopCodeJoin.route)
+                                // No tiene workshop asociado aún
+                                if (viewModel.isWorkshopManager()) {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopRegistrationStep1.route)
+                                } else {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopCodeJoin.route)
+                                }
                             }
                         } else {
                             navController.navigate(route) {

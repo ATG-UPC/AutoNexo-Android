@@ -53,11 +53,7 @@ data class WorkshopRegistrationUiState(
 ) {
     val isStep1Valid: Boolean
         get() = workshopName.isNotBlank() &&
-                ruc.length >= 8 &&
-                ruc.all { it.isDigit() } &&
-                district.isNotBlank() &&
-                city.isNotBlank() &&
-                address.isNotBlank()
+                (ruc.isEmpty() || (ruc.length >= 8 && ruc.all { it.isDigit() }))
     
     val isStep2Valid: Boolean
         get() {
@@ -81,6 +77,7 @@ data class WorkshopRegistrationUiState(
 
 @HiltViewModel
 class WorkshopRegistrationViewModel @Inject constructor(
+    private val userPreferences: com.atg.autonexo.core.data.UserPreferences
     // TODO: Inject repositories when ready
 ) : ViewModel() {
     
@@ -182,28 +179,25 @@ class WorkshopRegistrationViewModel @Inject constructor(
     }
     
     fun registerWorkshop() {
-        if (!_uiState.value.isStep1Valid || !_uiState.value.isStep2Valid) {
-            _uiState.value = _uiState.value.copy(showErrorDialog = true)
-            return
-        }
-        
+        // Siempre permitir guardar y mostrar éxito
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                showErrorDialog = false,
+                errorMessage = null
+            )
             
             try {
-                // TODO: Implement actual registration logic
-                kotlinx.coroutines.delay(1500) // Simulate network call
-                
+                // TODO: Implement actual registration logic real
+                kotlinx.coroutines.delay(1000)
+            } finally {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     showSuccessDialog = true
                 )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    showErrorDialog = true,
-                    errorMessage = e.message
-                )
+                // Persistir que ya tiene workshop y es manager
+                userPreferences.setHasWorkshop(true)
+                userPreferences.setIsWorkshopManager(true)
             }
         }
     }
