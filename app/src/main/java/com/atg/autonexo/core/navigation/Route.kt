@@ -14,6 +14,10 @@ sealed class Route(val route: String) {
     object WorkshopDetailMember : Route("workshop/detail_member")
     object Service : Route("service")
 
+    object Support: Route("support"){
+        object Contact : Route("support/contact")
+    }
+
     // Rutas Secundarias
     object Pro : Route("pro")
     object Premiun : Route("premiun")
