@@ -13,14 +13,22 @@ import com.atg.autonexo.features.iam.presentation.login.LoginScreen
 import com.atg.autonexo.features.iam.presentation.otp.OtpVerificationScreen
 import com.atg.autonexo.features.iam.presentation.register.RegisterWorkshopScreen
 import com.atg.autonexo.features.iam.presentation.resetpassword.ResetPasswordScreen
+import com.atg.autonexo.features.workshop.presentation.register.WorkshopRegistrationStep1Screen
+import com.atg.autonexo.features.workshop.presentation.register.WorkshopRegistrationStep2Screen
+import com.atg.autonexo.features.workshop.presentation.register.WorkshopCodeJoinScreen
+import com.atg.autonexo.features.workshop.presentation.detail.WorkshopDetailScreen
+import com.atg.autonexo.features.workshop.presentation.detail.WorkshopDetailViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.dashboard.DashboardScreen
 import com.atg.autonexo.features.iam.presentation.profile.EditProfileScreen
 import com.atg.autonexo.features.iam.presentation.profile.NewPasswordScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileViewModel
+import com.atg.autonexo.features.matchingbooking.presentation.dashboard.DashboardViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestListScreen
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestDetailScreen
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 
 @Composable
 fun AppNavigation(
@@ -65,10 +73,96 @@ fun AppNavigation(
                         }
                     }
                 },
-                onNavigateToNextStep = {
-                    // TODO: Navegar al paso 2 del registro
-                    // navController.navigate(Route.Auth.RegisterStep2.route)
+                onNavigateToHome = {
+                    navController.navigate(Route.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
+            )
+        }
+        
+        composable(Route.Auth.WorkshopRegistrationStep1.route) {
+            WorkshopRegistrationStep1Screen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToStep2 = {
+                    navController.navigate(Route.Auth.WorkshopRegistrationStep2.route)
+                }
+            )
+        }
+        
+        composable(Route.Auth.WorkshopRegistrationStep2.route) {
+            WorkshopRegistrationStep2Screen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSuccess = {
+                    navController.navigate(Route.WorkshopDetailOwner.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
+        composable(Route.Auth.WorkshopCodeJoin.route) {
+            WorkshopCodeJoinScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onSuccess = {
+                    navController.navigate(Route.WorkshopDetailMember.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Workshop detail (owner)
+        composable(Route.WorkshopDetailOwner.route) {
+            val vm: WorkshopDetailViewModel = hiltViewModel()
+            vm.loadWorkshopAsOwner()
+            WorkshopDetailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onGenerateCode = { vm.showCodeDialog() },
+                onEditWorkshop = { 
+                    navController.navigate(Route.Auth.WorkshopEditStep1.route)
+                },
+                onNavigate = { route -> navController.navigate(route) }
+            )
+        }
+        
+        // Workshop edit step 1
+        composable(Route.Auth.WorkshopEditStep1.route) {
+            WorkshopRegistrationStep1Screen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToStep2 = {
+                    navController.navigate(Route.Auth.WorkshopEditStep2.route)
+                }
+            )
+        }
+        
+        // Workshop edit step 2
+        composable(Route.Auth.WorkshopEditStep2.route) {
+            WorkshopRegistrationStep2Screen(
+                onNavigateBack = { navController.popBackStack() },
+                onSuccess = {
+                    navController.navigate(Route.WorkshopDetailOwner.route) {
+                        popUpTo(Route.WorkshopDetailOwner.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Workshop detail (member)
+        composable(Route.WorkshopDetailMember.route) {
+            val vm: WorkshopDetailViewModel = hiltViewModel()
+            vm.loadWorkshopAsMember()
+            WorkshopDetailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onGenerateCode = { /* no-op for member */ },
+                onEditWorkshop = { /* no-op for member */ },
+                onNavigate = { route -> navController.navigate(route) }
             )
         }
         
@@ -138,7 +232,24 @@ fun AppNavigation(
                 }
             )
         }
-        
+
+        composable(Route.Pro.route){
+            SubscribePro(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+        composable(Route.Premiun.route){
+            SubscribePremiun(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+
         composable("edit_profile") {
             val previousBackStackEntry = navController.previousBackStackEntry
             val profileViewModel = hiltViewModel<ProfileViewModel>(previousBackStackEntry!!)

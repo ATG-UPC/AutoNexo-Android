@@ -79,12 +79,49 @@ class EditProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            // TODO: Guardar en repositorio
-            kotlinx.coroutines.delay(1000)
-            
-            _uiState.update { it.copy(isLoading = false) }
+            try {
+                // TODO: Guardar en repositorio
+                kotlinx.coroutines.delay(1000)
+                
+                // Simular éxito o error aleatoriamente para demo
+                // En producción, esto sería el resultado real de la llamada al repositorio
+                val isSuccess = true // Cambiar a false para simular error
+                
+                _uiState.update { it.copy(isLoading = false) }
+                
+                if (isSuccess) {
+                    // Mostrar diálogo de éxito
+                    _uiState.update { it.copy(showSuccessDialog = true) }
+                } else {
+                    // Mostrar diálogo de error
+                    _uiState.update { 
+                        it.copy(
+                            showErrorDialog = true,
+                            errorMessage = "There was an error during the process."
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        showErrorDialog = true,
+                        errorMessage = "There was an error during the process."
+                    )
+                }
+            }
+        }
+    }
+    
+    fun dismissSuccessDialog() {
+        _uiState.update { it.copy(showSuccessDialog = false) }
+        viewModelScope.launch {
             _events.emit(EditProfileEvent.SaveSuccess)
         }
+    }
+    
+    fun dismissErrorDialog() {
+        _uiState.update { it.copy(showErrorDialog = false) }
     }
 }
 
