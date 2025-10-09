@@ -30,6 +30,8 @@ import com.atg.autonexo.features.matchingbooking.presentation.request.RequestDet
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
+import com.atg.autonexo.features.vehiclemaintenance.presentation.maintenance.ServiceOrderListScreen
+import com.atg.autonexo.features.vehiclemaintenance.presentation.maintenance.ServiceOrderRegisterScreen
 import com.atg.autonexo.features.matchingbooking.presentation.offer.OfferListScreen
 import androidx.compose.runtime.LaunchedEffect
 import com.atg.autonexo.core.data.UserPreferences
@@ -287,6 +289,38 @@ fun AppNavigation(
                         }
                         else -> navController.navigate(route)
                     }
+                }
+            )
+        }
+
+        // Service Order List
+        composable(Route.ServiceOrder.List.route) {
+            ServiceOrderListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToRegister = {
+                    navController.navigate(Route.ServiceOrder.Register.route)
+                },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Home.route,
+                        Route.Request.route,
+                        Route.Offer.route,
+                        Route.Workshop.route,
+                        Route.Service.route -> navController.navigate(route) {
+                            popUpTo(Route.Home.route)
+                        }
+                        else -> navController.navigate(route)
+                    }
+                }
+            )
+        }
+
+        // Service Order Register
+        composable(Route.ServiceOrder.Register.route) {
+            ServiceOrderRegisterScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSubmit = {
+                    navController.popBackStack()
                 }
             )
         }

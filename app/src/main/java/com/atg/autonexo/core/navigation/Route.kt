@@ -42,4 +42,10 @@ sealed class Route(val route: String) {
             fun createRoute(vehicleId: String) = "vehicle/$vehicleId"
         }
     }
+
+    // Rutas de Service Order
+    object ServiceOrder : Route("service") {
+        object List : Route("service")
+        object Register : Route("service/register")
+    }
 }

@@ -49,17 +49,17 @@ fun BottomNavBar(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(90.dp)
+                .height(70.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 8.dp, top = 16.dp),
+                    .padding(bottom = 8.dp, top = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Bottom
             ) {
-                items.forEachIndexed { index, item ->
+                items.forEach { item ->
                     if (item is BottomNavItem.Offer) {
                         // Espacio para el FAB central
                         Spacer(modifier = Modifier.width(70.dp))
@@ -77,9 +77,9 @@ fun BottomNavBar(
             FloatingActionButton(
                 onClick = { onNavigate(BottomNavItem.Offer.route) },
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .align(Alignment.TopCenter)
-                    .offset(y = (-8).dp),
+                    .offset(y = (-12).dp),
                 shape = CircleShape,
                 containerColor = Color(0xFF5E7B97),
                 contentColor = Color.White,
@@ -91,7 +91,7 @@ fun BottomNavBar(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Offer",
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(26.dp),
                     tint = Color.White
                 )
             }
@@ -109,29 +109,29 @@ private fun BottomNavItemButton(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .width(85.dp)
+            .width(75.dp)
             .fillMaxHeight()
             .padding(vertical = 4.dp)
     ) {
         IconButton(
             onClick = onClick,
-            modifier = Modifier.size(44.dp)
+            modifier = Modifier.size(48.dp)
         ) {
             Icon(
                 imageVector = item.icon,
                 contentDescription = item.label,
-                tint = if (isSelected) Color(0xFF000000) else Color(0xFF6B6B6B),
-                modifier = Modifier.size(28.dp)
+                tint = if (isSelected) Color(0xFF000000) else Color(0xFF8E8E8E),
+                modifier = Modifier.size(24.dp)
             )
         }
-        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = item.label,
-            fontSize = 13.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = if (isSelected) Color(0xFF000000) else Color(0xFF6B6B6B),
+            fontSize = 11.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isSelected) Color(0xFF000000) else Color(0xFF8E8E8E),
             maxLines = 1,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 2.dp)
         )
     }
 }
