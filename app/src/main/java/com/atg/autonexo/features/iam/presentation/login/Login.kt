@@ -165,35 +165,14 @@ private fun LoginIllustration() {
     ) {
         val illustrationHeight = (maxHeight * 0.25f).coerceAtMost(180.dp)
         
-        // TODO: Reemplazar con la imagen real
-        // Image(
-        //     painter = painterResource(id = R.drawable.illus_mechanic),
-        //     contentDescription = "Mecánico trabajando en un auto",
-        //     modifier = Modifier
-        //         .fillMaxWidth()
-        //         .height(illustrationHeight),
-        //     contentScale = ContentScale.Fit
-        // )
-        
-        // Placeholder temporal
-        Box(
+        Image(
+            painter = painterResource(id = com.atg.autonexo.R.drawable.login_img),
+            contentDescription = "Mecánico trabajando en un auto",
             modifier = Modifier
                 .fillMaxWidth()
-                .height(illustrationHeight)
-                .background(
-                    Color(0xFFF5F5F5),
-                    RoundedCornerShape(16.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Ilustración Mecánico\n(Colocar imagen aquí)",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = Color(0xFFAAAAAA),
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
+                .height(illustrationHeight),
+            contentScale = ContentScale.Fit
+        )
     }
 }
 

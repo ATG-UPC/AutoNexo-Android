@@ -37,10 +37,21 @@ import com.atg.autonexo.features.iam.presentation.register.RegisterWorkshopUiSta
 @Composable
 fun RegisterWorkshopScreen(
     onNavigateBack: () -> Unit = {},
-    onNavigateToNextStep: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
     viewModel: RegisterWorkshopViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Mostrar diálogo de términos
+    if (uiState.showTermsDialog) {
+        TermsAndConditionsDialog(
+            onAccept = {
+                viewModel.acceptTermsAndRegister()
+                onNavigateToHome()
+            },
+            onDismiss = viewModel::dismissTermsDialog
+        )
+    }
     
     RegisterWorkshopContent(
         uiState = uiState,
@@ -49,13 +60,12 @@ fun RegisterWorkshopScreen(
         onPhoneChange = viewModel::updatePhone,
         onPasswordChange = viewModel::updatePassword,
         onRepeatPasswordChange = viewModel::updateRepeatPassword,
-        onWorkshopCodeChange = viewModel::updateWorkshopCode,
+        onIsWorkshopManagerChange = viewModel::updateIsWorkshopManager,
         onTermsCheckedChange = viewModel::updateTermsAccepted,
         onNextClick = viewModel::proceedToNextStep,
         onBackClick = onNavigateBack,
         onTogglePasswordVisibility = viewModel::togglePasswordVisibility,
         onToggleRepeatPasswordVisibility = viewModel::toggleRepeatPasswordVisibility,
-        onWhatsThisClick = viewModel::showWorkshopCodeInfo,
         onTermsClick = viewModel::showTermsAndConditions
     )
 }
@@ -68,13 +78,12 @@ private fun RegisterWorkshopContent(
     onPhoneChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onRepeatPasswordChange: (String) -> Unit,
-    onWorkshopCodeChange: (String) -> Unit,
+    onIsWorkshopManagerChange: (Boolean) -> Unit,
     onTermsCheckedChange: (Boolean) -> Unit,
     onNextClick: () -> Unit,
     onBackClick: () -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onToggleRepeatPasswordVisibility: () -> Unit,
-    onWhatsThisClick: () -> Unit,
     onTermsClick: () -> Unit
 ) {
     Column(
@@ -95,12 +104,11 @@ private fun RegisterWorkshopContent(
             onPhoneChange = onPhoneChange,
             onPasswordChange = onPasswordChange,
             onRepeatPasswordChange = onRepeatPasswordChange,
-            onWorkshopCodeChange = onWorkshopCodeChange,
+            onIsWorkshopManagerChange = onIsWorkshopManagerChange,
             onTermsCheckedChange = onTermsCheckedChange,
             onNextClick = onNextClick,
             onTogglePasswordVisibility = onTogglePasswordVisibility,
             onToggleRepeatPasswordVisibility = onToggleRepeatPasswordVisibility,
-            onWhatsThisClick = onWhatsThisClick,
             onTermsClick = onTermsClick,
             modifier = Modifier
                 .padding(horizontal = 24.dp)
@@ -156,12 +164,11 @@ private fun RegistrationForm(
     onPhoneChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onRepeatPasswordChange: (String) -> Unit,
-    onWorkshopCodeChange: (String) -> Unit,
+    onIsWorkshopManagerChange: (Boolean) -> Unit,
     onTermsCheckedChange: (Boolean) -> Unit,
     onNextClick: () -> Unit,
     onTogglePasswordVisibility: () -> Unit,
     onToggleRepeatPasswordVisibility: () -> Unit,
-    onWhatsThisClick: () -> Unit,
     onTermsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -494,88 +501,47 @@ private fun RegistrationForm(
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         
-        // Campo Workshop Code
+        // Campo "¿Are you a Workshop manager?"
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Workshop Code",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 14.sp,
-                    color = Color(0xFF4A5568)
-                )
-            )
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "(optional)",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                        color = Color(0xFF9CA3AF) // Gray2
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Checkbox(
+                    checked = uiState.isWorkshopManager,
+                    onCheckedChange = onIsWorkshopManagerChange,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = Color(0xFF4682B4),
+                        uncheckedColor = Color(0xFF9CA3AF)
                     )
                 )
                 
                 Spacer(modifier = Modifier.width(8.dp))
                 
-                TextButton(
-                    onClick = onWhatsThisClick,
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text(
-                        text = "What's this?",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 13.sp,
-                            color = Color(0xFF4682B4)
-                        )
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        OutlinedTextField(
-            value = uiState.workshopCode,
-            onValueChange = onWorkshopCodeChange,
-            placeholder = {
                 Text(
-                    text = "#XXX-XXX-XXX",
-                    color = Color(0xFF9CA3AF)
+                    text = "¿Are you a Workshop manager?",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 14.sp,
+                        color = Color(0xFF4A5568)
+                    )
                 )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF4682B4),
-                unfocusedBorderColor = Color(0xFFD1D5DB),
-                focusedTextColor = Color(0xFF1A202C),
-                unfocusedTextColor = Color(0xFF1A202C)
-            ),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { focusManager.clearFocus() }
+            }
+            
+            Text(
+                text = "(optional)",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 12.sp,
+                    color = Color(0xFF9CA3AF)
+                ),
+                modifier = Modifier.padding(end = 4.dp)
             )
-        )
-        
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        // Checkbox de términos y condiciones
-        AuthCheckbox(
-            checked = uiState.termsAccepted,
-            onCheckedChange = onTermsCheckedChange,
-            text = "Signing in you agree with our Terms and Condition",
-            onTermsClick = onTermsClick
-        )
+        }
         
         Spacer(modifier = Modifier.height(24.dp))
         
@@ -627,13 +593,12 @@ private fun RegisterWorkshopScreenPreview() {
             onPhoneChange = {},
             onPasswordChange = {},
             onRepeatPasswordChange = {},
-            onWorkshopCodeChange = {},
+            onIsWorkshopManagerChange = {},
             onTermsCheckedChange = {},
             onNextClick = {},
             onBackClick = {},
             onTogglePasswordVisibility = {},
             onToggleRepeatPasswordVisibility = {},
-            onWhatsThisClick = {},
             onTermsClick = {}
         )
     }
