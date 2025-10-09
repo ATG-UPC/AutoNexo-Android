@@ -29,6 +29,10 @@ import com.atg.autonexo.features.matchingbooking.presentation.request.RequestDet
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
+import com.atg.autonexo.features.matchingbooking.presentation.offer.OfferListScreen
+import androidx.compose.runtime.LaunchedEffect
+import com.atg.autonexo.core.data.UserPreferences
+import androidx.compose.runtime.remember
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 
@@ -228,6 +232,47 @@ fun AppNavigation(
             DashboardScreen(navController = navController)
         }
         
+        // Workshop entry: decide and redirect safely
+        composable(Route.Workshop.route) {
+            val userPrefs = remember { dagger.hilt.android.EntryPointAccessors.fromApplication(
+                navController.context.applicationContext,
+                UserPrefsEntryPoint::class.java
+            ).userPreferences() }
+
+            LaunchedEffect(Unit) {
+                val isManager = userPrefs.isWorkshopManager()
+                val hasWorkshop = userPrefs.hasWorkshop()
+                val target = when {
+                    isManager && hasWorkshop -> Route.WorkshopDetailOwner.route
+                    !isManager && hasWorkshop -> Route.WorkshopDetailMember.route
+                    isManager && !hasWorkshop -> Route.Auth.WorkshopRegistrationStep1.route
+                    else -> Route.Auth.WorkshopCodeJoin.route
+                }
+                navController.navigate(target) {
+                    popUpTo(Route.Home.route)
+                }
+            }
+        }
+
+        // Offer
+        composable(Route.Offer.route) {
+            OfferListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigate = { route ->
+                    when (route) {
+                        Route.Home.route,
+                        Route.Request.route,
+                        Route.Offer.route,
+                        Route.Workshop.route,
+                        Route.Service.route -> navController.navigate(route) {
+                            popUpTo(Route.Home.route)
+                        }
+                        else -> navController.navigate(route)
+                    }
+                }
+            )
+        }
+
         // Rutas de Profile
         composable(Route.Profile.route) {
             ProfileScreen(
@@ -333,19 +378,7 @@ fun AppNavigation(
                         }
                         else -> navController.navigate(route)
                     }
-                onOfferClick = { requestId ->
-                    navController.navigate(Route.RequestDetail.createRoute(requestId))
                 }
-            )
-        }
-        composable(
-            route = Route.RequestDetail.route,
-            arguments = listOf(navArgument("requestId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getString("requestId") ?: ""
-            RequestDetailScreen(
-                requestId = id,
-                onNavigateBack = { navController.popBackStack() }
             )
         }
         
