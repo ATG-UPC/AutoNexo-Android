@@ -39,8 +39,11 @@ fun DashboardScreen(
                 onNavigateToProfile = {
                     navController.navigate(com.atg.autonexo.core.navigation.Route.Profile.route)
                 },
-                onNavigateToPayment = {
-                    // TODO: Navegar a pagos
+                onNavigateToPlanPremiun = {
+                    navController.navigate(com.atg.autonexo.core.navigation.Route.Premiun.route)
+                },
+                onNavigateToPlanPro = {
+                    navController.navigate(com.atg.autonexo.core.navigation.Route.Pro.route)
                 },
                 onNavigateToSupport = {
                     // TODO: Navegar a soporte

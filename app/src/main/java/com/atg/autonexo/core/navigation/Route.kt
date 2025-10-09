@@ -8,7 +8,11 @@ sealed class Route(val route: String) {
     object Offer : Route("offer")
     object Workshop : Route("workshop")
     object Service : Route("service")
-    
+
+    // Rutas Secundarias
+    object Pro : Route("pro")
+    object Premiun : Route("premiun")
+
     // Rutas de autenticación
     object Auth : Route("auth") {
         object Login : Route("auth/login")

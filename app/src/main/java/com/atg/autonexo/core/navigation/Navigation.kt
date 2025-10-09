@@ -22,6 +22,8 @@ import com.atg.autonexo.features.iam.presentation.profile.NewPasswordScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestListScreen
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
+import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
 
 @Composable
@@ -178,7 +180,24 @@ fun AppNavigation(
                 }
             )
         }
-        
+
+        composable(Route.Pro.route){
+            SubscribePro(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+        composable(Route.Premiun.route){
+            SubscribePremiun(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+            )
+        }
+
+
         composable("edit_profile") {
             val previousBackStackEntry = navController.previousBackStackEntry
             val profileViewModel = hiltViewModel<ProfileViewModel>(previousBackStackEntry!!)
