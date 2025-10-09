@@ -246,6 +246,9 @@ fun AppNavigation(
                 } },
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
         
         // Workshop entry: decide and redirect safely
         composable(Route.Workshop.route) {
