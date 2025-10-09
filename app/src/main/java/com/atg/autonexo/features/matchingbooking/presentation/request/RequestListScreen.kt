@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.atg.autonexo.core.ui.components.BottomArcShape
@@ -322,21 +324,36 @@ fun RequestCard(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Imagen del auto (placeholder)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE0E0E0)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DirectionsCar,
+                // Imagen del auto con auto1/auto2 si existen
+                val context = LocalContext.current
+                val name = if (request.serviceRequestId.hashCode() % 2 == 0) "auto1" else "auto2"
+                val imageId = context.resources.getIdentifier(name, "drawable", context.packageName)
+                if (imageId != 0) {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(id = imageId),
                         contentDescription = null,
-                        tint = Color(0xFF8E8E8E),
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFE0E0E0)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            tint = Color(0xFF8E8E8E),
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

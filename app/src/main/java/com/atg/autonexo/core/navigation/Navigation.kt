@@ -25,6 +25,7 @@ import com.atg.autonexo.features.iam.presentation.profile.ProfileScreen
 import com.atg.autonexo.features.iam.presentation.profile.ProfileViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.dashboard.DashboardViewModel
 import com.atg.autonexo.features.matchingbooking.presentation.request.RequestListScreen
+import com.atg.autonexo.features.matchingbooking.presentation.request.RequestDetailScreen
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.vehiclemaintenance.presentation.vehicle.VehicleDetailScreen
@@ -289,12 +290,23 @@ fun AppNavigation(
         // Rutas de Matching & Booking
         composable(Route.Request.route) {
             RequestListScreen(
-                onRequestClick = { _ ->
-                    // TODO: Navegar a detalles del request
+                onRequestClick = { requestId ->
+                    navController.navigate(Route.RequestDetail.createRoute(requestId))
                 },
                 onOfferClick = { _ ->
                     // TODO: Mostrar dialog de offer
                 }
+            )
+        }
+
+        composable(
+            route = Route.RequestDetail.route,
+            arguments = listOf(navArgument("requestId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("requestId") ?: ""
+            RequestDetailScreen(
+                requestId = id,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         
