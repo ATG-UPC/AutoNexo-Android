@@ -2,6 +2,7 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atg.autonexo.core.data.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,11 +16,12 @@ data class RegisterWorkshopUiState(
     val phone: String = "",
     val password: String = "",
     val repeatPassword: String = "",
-    val workshopCode: String = "",
+    val isWorkshopManager: Boolean = false,
     val termsAccepted: Boolean = false,
     val isPasswordVisible: Boolean = false,
     val isRepeatPasswordVisible: Boolean = false,
     val isLoading: Boolean = false,
+    val showTermsDialog: Boolean = false,
     val errorMessage: String? = null,
     val fullNameError: String? = null,
     val emailError: String? = null,
@@ -36,12 +38,12 @@ data class RegisterWorkshopUiState(
                 password == repeatPassword &&
                 password.length >= 8 &&
                 phone.length >= 9 &&
-                termsAccepted &&
                 android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
 
 @HiltViewModel
 class RegisterWorkshopViewModel @Inject constructor(
+    private val userPreferences: UserPreferences
     // TODO: Inyectar repositorio cuando esté listo
     // private val authRepository: AuthRepository
 ) : ViewModel() {
@@ -90,9 +92,9 @@ class RegisterWorkshopViewModel @Inject constructor(
         )
     }
     
-    fun updateWorkshopCode(workshopCode: String) {
+    fun updateIsWorkshopManager(isManager: Boolean) {
         _uiState.value = _uiState.value.copy(
-            workshopCode = workshopCode,
+            isWorkshopManager = isManager,
             errorMessage = null
         )
     }
@@ -158,11 +160,6 @@ class RegisterWorkshopViewModel @Inject constructor(
         )
     }
     
-    fun showWorkshopCodeInfo() {
-        // TODO: Mostrar información sobre el Workshop Code
-        // Podría ser un dialog o navegación a una pantalla de ayuda
-    }
-    
     fun showTermsAndConditions() {
         // TODO: Mostrar términos y condiciones
         // Podría ser un dialog o navegación a una pantalla web
@@ -188,22 +185,28 @@ class RegisterWorkshopViewModel @Inject constructor(
             return
         }
         
-        if (!_uiState.value.termsAccepted) {
-            _uiState.value = _uiState.value.copy(
-                errorMessage = "Debe aceptar los términos y condiciones"
-            )
-            return
-        }
+        // Guardar el estado de isWorkshopManager
+        userPreferences.setIsWorkshopManager(_uiState.value.isWorkshopManager)
         
-        // TODO: Navegar al siguiente paso del registro
-        // Este será el paso 2 del flujo de 3 pasos
+        // Mostrar diálogo de términos y condiciones (no se requiere termsAccepted aquí)
         _uiState.value = _uiState.value.copy(
+            showTermsDialog = true,
             fullNameError = null,
             emailError = null,
             phoneError = null,
             passwordError = null,
             repeatPasswordError = null
         )
+    }
+    
+    fun dismissTermsDialog() {
+        _uiState.value = _uiState.value.copy(showTermsDialog = false)
+    }
+    
+    fun acceptTermsAndRegister() {
+        // Aquí puedes hacer el registro real cuando tengas el repositorio
+        // TODO: Implement actual registration
+        _uiState.value = _uiState.value.copy(showTermsDialog = false)
     }
     
     fun registerWorkshop() {
@@ -234,7 +237,7 @@ class RegisterWorkshopViewModel @Inject constructor(
                 //     email = _uiState.value.email,
                 //     phone = _uiState.value.phone,
                 //     password = _uiState.value.password,
-                //     workshopCode = _uiState.value.workshopCode
+                //     isWorkshopManager = _uiState.value.isWorkshopManager
                 // )
                 
                 // Simulación temporal

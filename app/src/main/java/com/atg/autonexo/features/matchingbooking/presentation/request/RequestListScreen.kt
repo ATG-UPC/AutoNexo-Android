@@ -21,9 +21,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.atg.autonexo.core.ui.components.BottomArcShape
+import com.atg.autonexo.core.ui.components.BottomNavBar
 import com.atg.autonexo.features.matchingbooking.presentation.offer.MakeOfferDialog
 import com.atg.autonexo.features.matchingbooking.presentation.request.models.ServiceRequestUi
 
@@ -31,6 +34,8 @@ import com.atg.autonexo.features.matchingbooking.presentation.request.models.Ser
 fun RequestListScreen(
     onRequestClick: (String) -> Unit,
     onOfferClick: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+    onNavigate: (String) -> Unit,
     viewModel: RequestListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -40,7 +45,13 @@ fun RequestListScreen(
     var selectedRequestId by rememberSaveable { mutableStateOf("") }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        bottomBar = {
+            BottomNavBar(
+                currentRoute = "request",
+                onNavigate = onNavigate
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -69,7 +80,7 @@ fun RequestListScreen(
                         .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { /* TODO: Navigate back */ }) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
@@ -322,21 +333,37 @@ fun RequestCard(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Imagen del auto (placeholder)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE0E0E0)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DirectionsCar,
+                // Imagen del auto con auto1/auto2 si existen
+                val context = LocalContext.current
+                val resolved = ImageResolver.resolveNameFromDescription(request.vehicleDescription)
+                    ?: if (request.serviceRequestId.hashCode() % 2 == 0) "auto1" else "auto2"
+                val imageId = context.resources.getIdentifier(resolved, "drawable", context.packageName)
+                if (imageId != 0) {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(id = imageId),
                         contentDescription = null,
-                        tint = Color(0xFF8E8E8E),
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFE0E0E0)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DirectionsCar,
+                            contentDescription = null,
+                            tint = Color(0xFF8E8E8E),
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

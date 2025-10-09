@@ -22,7 +22,8 @@ import androidx.compose.ui.unit.sp
 fun DrawerContent(
     userName: String,
     onNavigateToProfile: () -> Unit,
-    onNavigateToPayment: () -> Unit,
+    onNavigateToPlanPro: () -> Unit,
+    onNavigateToPlanPremiun: () -> Unit,
     onNavigateToSupport: () -> Unit,
     onNavigateToTerms: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
@@ -90,9 +91,18 @@ fun DrawerContent(
 
             DrawerMenuItem(
                 icon = Icons.Default.Payment,
-                label = "Payment",
+                label = "Plan Pro",
                 onClick = {
-                    onNavigateToPayment()
+                    onNavigateToPlanPro()
+                    onClose()
+                }
+            )
+
+            DrawerMenuItem(
+                icon = Icons.Default.Payment,
+                label = "Plan Premiun",
+                onClick = {
+                    onNavigateToPlanPremiun()
                     onClose()
                 }
             )

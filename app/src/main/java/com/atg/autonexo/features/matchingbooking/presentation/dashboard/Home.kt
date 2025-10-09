@@ -39,8 +39,11 @@ fun DashboardScreen(
                 onNavigateToProfile = {
                     navController.navigate(com.atg.autonexo.core.navigation.Route.Profile.route)
                 },
-                onNavigateToPayment = {
-                    // TODO: Navegar a pagos
+                onNavigateToPlanPremiun = {
+                    navController.navigate(com.atg.autonexo.core.navigation.Route.Premiun.route)
+                },
+                onNavigateToPlanPro = {
+                    navController.navigate(com.atg.autonexo.core.navigation.Route.Pro.route)
                 },
                 onNavigateToSupport = {
                     navController.navigate(com.atg.autonexo.core.navigation.Route.Support.route)
@@ -71,9 +74,33 @@ fun DashboardScreen(
                 BottomNavBar(
                     currentRoute = navController.currentDestination?.route ?: "home",
                     onNavigate = { route ->
-                        navController.navigate(route) {
-                            launchSingleTop = true
-                            restoreState = true
+                        if (route == "workshop") {
+                            // Si ya tiene workshop asociado, ir directo al detalle
+                            if (viewModel.hasWorkshop()) {
+                                if (viewModel.isWorkshopManager()) {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.WorkshopDetailOwner.route) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                } else {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.WorkshopDetailMember.route) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            } else {
+                                // No tiene workshop asociado aún
+                                if (viewModel.isWorkshopManager()) {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopRegistrationStep1.route)
+                                } else {
+                                    navController.navigate(com.atg.autonexo.core.navigation.Route.Auth.WorkshopCodeJoin.route)
+                                }
+                            }
+                        } else {
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
                     }
                 )
