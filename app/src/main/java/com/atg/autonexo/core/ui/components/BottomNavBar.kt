@@ -37,7 +37,7 @@ fun BottomNavBar(
         BottomNavItem.Home,
         BottomNavItem.Request,
         BottomNavItem.Offer,
-        BottomNavItem.Workshop,
+                        BottomNavItem.Workshop,
         BottomNavItem.Service
     )
 
