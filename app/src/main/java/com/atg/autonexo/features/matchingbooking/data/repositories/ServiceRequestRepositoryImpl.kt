@@ -87,18 +87,16 @@ class ServiceRequestRepositoryImpl @Inject constructor(
     private fun ServiceRequestDto.toDomainModel(): ServiceRequest {
         return ServiceRequest(
             id = id ?: 0,
-            carOwnerId = carOwnerId ?: 0,
+            userId = userId ?: 0,
             vehicleId = vehicleId ?: 0,
-            vehicleDescription = vehicleDescription ?: "",
-            serviceType = serviceType ?: "",
+            requestedServices = requestedServices ?: emptyList(),
             description = description ?: "",
-            urgencyLevel = urgencyLevel ?: "NORMAL",
-            preferredDate = preferredDate,
             latitude = latitude ?: 0.0,
             longitude = longitude ?: 0.0,
+            searchRadiusKm = searchRadiusKm ?: 5,
             status = status ?: "PENDING",
             createdAt = createdAt,
-            offerCount = offerCount ?: 0
+            cancelledAt = cancelledAt
         )
     }
 }

@@ -18,10 +18,37 @@ class SubscriptionRepositoryImpl @Inject constructor(
         private const val TAG = "SubscriptionRepository"
     }
     
-    override suspend fun createSubscriptionPayment(subscriptionTier: String, paymentMethod: String?): AuthResult<Payment> = withContext(Dispatchers.IO) {
+    override suspend fun createSubscriptionPayment(
+        workshopId: Long,
+        subscriptionTier: String,
+        paymentMethod: String,
+        paymentType: String,
+        description: String
+    ): AuthResult<Payment> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Creating subscription payment for tier: $subscriptionTier")
-            val request = CreatePaymentRequestDto(subscriptionTier, paymentMethod)
+            val request = CreatePaymentRequestDto(
+                workshopId = workshopId,
+                subscriptionTier = subscriptionTier,
+                paymentMethod = paymentMethod,
+                paymentType = paymentType,
+                description = description
+            )
+            
+            // Log detallado del request
+            Log.d(TAG, "=== REQUEST DETAILS ===")
+            Log.d(TAG, "workshopId: $workshopId (type: ${workshopId::class.simpleName})")
+            Log.d(TAG, "subscriptionTier: $subscriptionTier (type: String)")
+            Log.d(TAG, "paymentMethod: $paymentMethod (type: String)")
+            Log.d(TAG, "paymentType: $paymentType (type: String)")
+            Log.d(TAG, "description: $description")
+            
+            // Convertir a JSON para ver qué se envía
+            val gson = com.google.gson.Gson()
+            val jsonString = gson.toJson(request)
+            Log.d(TAG, "JSON to send: $jsonString")
+            Log.d(TAG, "======================")
+            
             val response = paymentService.createSubscriptionPayment(request)
             
             if (response.isSuccessful) {
@@ -33,12 +60,15 @@ class SubscriptionRepositoryImpl @Inject constructor(
                     return@withContext AuthResult.Error("Empty response from server")
                 }
             } else {
-                val errorMessage = when (response.code()) {
-                    400 -> "Datos inválidos"
-                    409 -> "Ya tienes un pago pendiente"
-                    else -> "Error al crear pago"
-                }
+                val errorBody = response.errorBody()?.string()
                 Log.e(TAG, "Create payment failed: ${response.code()}")
+                Log.e(TAG, "Error body: $errorBody")
+                
+                val errorMessage = when (response.code()) {
+                    400 -> "Datos inválidos: $errorBody"
+                    409 -> "Ya tienes una suscripción activa"
+                    else -> "Error al crear suscripción: ${response.message()}"
+                }
                 return@withContext AuthResult.Error(errorMessage, response.code())
             }
         } catch (e: Exception) {

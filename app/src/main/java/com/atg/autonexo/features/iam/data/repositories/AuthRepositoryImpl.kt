@@ -469,13 +469,17 @@ class AuthRepositoryImpl @Inject constructor(
         // Actualizar estado de workshop
         if (user.workshopId != null) {
             userPreferences.setHasWorkshop(true)
+            userPreferences.saveWorkshopId(user.workshopId)
+            Log.d(TAG, "Workshop ID saved: ${user.workshopId}")
         } else {
             userPreferences.setHasWorkshop(false)
+            Log.d(TAG, "User has no workshop")
         }
         
         // Actualizar rol de workshop manager
         if (user.isWorkshopManager()) {
             userPreferences.setIsWorkshopManager(true)
+            Log.d(TAG, "User is workshop manager")
         } else {
             userPreferences.setIsWorkshopManager(false)
         }

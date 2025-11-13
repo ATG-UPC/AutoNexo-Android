@@ -2,9 +2,11 @@ package com.atg.autonexo.features.matchingbooking.presentation.request
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -147,26 +149,87 @@ fun RequestListScreen(
                 }
             }
 
-            // Lista de requests
-            LazyColumn(
+            // Loading, Error o Lista de requests
+            Box(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentAlignment = Alignment.Center
             ) {
-                items(uiState.requests) { request ->
-                    RequestCard(
-                        request = request,
-                        onDetailsClick = { onRequestClick(request.serviceRequestId) },
-                        onOfferClick = {
-                            selectedRequestId = request.serviceRequestId
-                            showOfferDialog = true
-                        },
-                        onDismiss = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Request dismissed")
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(
+                            color = Color(0xFF4682B4),
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                    uiState.errorMessage != null -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Error,
+                                contentDescription = null,
+                                tint = Color(0xFFE57373),
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Text(
+                                text = uiState.errorMessage ?: "Error desconocido",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF666666)
+                            )
+                            Button(
+                                onClick = { viewModel.loadRequests() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF4682B4)
+                                )
+                            ) {
+                                Text("Reintentar")
                             }
                         }
-                    )
+                    }
+                    uiState.requests.isEmpty() -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Inbox,
+                                contentDescription = null,
+                                tint = Color(0xFFBDBDBD),
+                                modifier = Modifier.size(64.dp)
+                            )
+                            Text(
+                                text = "No hay solicitudes disponibles",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF666666)
+                            )
+                        }
+                    }
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(uiState.requests) { request ->
+                                RequestCard(
+                                    request = request,
+                                    onDetailsClick = { onRequestClick(request.serviceRequestId) },
+                                    onOfferClick = {
+                                        selectedRequestId = request.serviceRequestId
+                                        showOfferDialog = true
+                                    },
+                                    onDismiss = {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Request dismissed")
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -244,14 +307,14 @@ fun RequestCard(
             modifier = Modifier.padding(12.dp)
         ) {
             Column {
-                // Chips de categoría
+                // Chips de categoría (servicios solicitados)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    ChipTag("Motor")
-                    ChipTag("Front Headlights")
-                    ChipTag("Front Dents")
+                    ChipTag(request.serviceType.name.replace("_", " "))
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))

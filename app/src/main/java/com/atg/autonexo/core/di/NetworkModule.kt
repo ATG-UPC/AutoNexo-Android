@@ -58,7 +58,7 @@ object NetworkModule {
         authInterceptor: AuthInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(authInterceptor) // Agregar primero para que se ejecute antes
+            .addInterceptor(authInterceptor) // CRÍTICO: Agregar token de autenticación
             .addInterceptor(loggingInterceptor)
             .addInterceptor(responseLoggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)

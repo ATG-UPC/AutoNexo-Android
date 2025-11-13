@@ -72,6 +72,15 @@ class UserPreferences @Inject constructor(
         return prefs.getBoolean(KEY_HAS_WORKSHOP, false)
     }
     
+    fun saveWorkshopId(workshopId: Long) {
+        prefs.edit().putLong(KEY_WORKSHOP_ID, workshopId).apply()
+    }
+    
+    fun getWorkshopId(): Long? {
+        val id = prefs.getLong(KEY_WORKSHOP_ID, -1L)
+        return if (id == -1L) null else id
+    }
+    
     // ========== Clear All ==========
     
     fun clearUserData() {
@@ -84,6 +93,7 @@ class UserPreferences @Inject constructor(
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_IS_WORKSHOP_MANAGER = "is_workshop_manager"
         private const val KEY_HAS_WORKSHOP = "has_workshop"
+        private const val KEY_WORKSHOP_ID = "workshop_id"
     }
 }
 

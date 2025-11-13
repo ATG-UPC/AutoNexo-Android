@@ -161,8 +161,10 @@ class WorkshopCreationFlowViewModel @Inject constructor(
                 
                 when (createResult) {
                     is AuthResult.Success -> {
+                        val workshop = createResult.data
                         userPreferences.setHasWorkshop(true)
                         userPreferences.setIsWorkshopManager(true)
+                        userPreferences.saveWorkshopId(workshop.id)
                         
                         _uiState.value = state.copy(
                             isSaving = false,
@@ -323,6 +325,10 @@ class WorkshopCreationFlowViewModel @Inject constructor(
                 when (createResult) {
                     is AuthResult.Success -> {
                         // Workshop creado exitosamente
+                        val workshop = createResult.data
+                        
+                        // Guardar workshopId
+                        userPreferences.saveWorkshopId(workshop.id)
                         
                         // 2. Guardar tags si hay
                         if (state.selectedTags.isNotEmpty()) {

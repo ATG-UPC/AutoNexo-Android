@@ -1,17 +1,18 @@
 ﻿package com.atg.autonexo.features.matchingbooking.domain.models
 
+/**
+ * Domain model para Service Request - Coincide con el backend
+ */
 data class ServiceRequest(
     val id: Long,
-    val carOwnerId: Long,
+    val userId: Long,
     val vehicleId: Long,
-    val vehicleDescription: String,
-    val serviceType: String,
+    val requestedServices: List<String>,
     val description: String,
-    val urgencyLevel: String,
-    val preferredDate: String?,
     val latitude: Double,
     val longitude: Double,
+    val searchRadiusKm: Int,
     val status: String,
     val createdAt: String?,
-    val offerCount: Int
+    val cancelledAt: String?
 )

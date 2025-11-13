@@ -6,13 +6,13 @@ data class RequestListUiState(
     val isLoading: Boolean = false,
     val requests: List<ServiceRequestUi> = emptyList(),
     val selectedFilter: RequestFilter = RequestFilter.ALL,
-    val error: String? = null
+    val errorMessage: String? = null
 )
 
 enum class RequestFilter {
     ALL,
-    NEW,
-    ASSIGNED_TO_ME,
-    COMPLETED
+    PENDING,
+    MATCHING,
+    ARCHIVED
 }
 

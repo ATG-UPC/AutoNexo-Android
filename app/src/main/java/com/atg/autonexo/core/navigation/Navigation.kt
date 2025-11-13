@@ -388,6 +388,11 @@ fun AppNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
+                onSuccess = {
+                    navController.navigate(Route.Home.route) {
+                        popUpTo(Route.Home.route) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -396,6 +401,11 @@ fun AppNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
+                onSuccess = {
+                    navController.navigate(Route.Home.route) {
+                        popUpTo(Route.Home.route) { inclusive = true }
+                    }
+                }
             )
         }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -27,7 +28,8 @@ fun PlanCard(
     price: String,
     benefits: List<String>,
     buttonText: String,
-    onJoinClick: () -> Unit
+    onJoinClick: () -> Unit,
+    isLoading: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -83,9 +85,18 @@ fun PlanCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 20.dp),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            enabled = !isLoading
         ) {
-            Text(text = buttonText, fontSize = 16.sp)
+            if (isLoading) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(text = buttonText, fontSize = 16.sp)
+            }
         }
     }
 }
