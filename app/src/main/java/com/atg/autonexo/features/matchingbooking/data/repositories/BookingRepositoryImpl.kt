@@ -130,7 +130,7 @@ class BookingRepositoryImpl @Inject constructor(
     override suspend fun completeService(
         bookingId: String,
         mileage: Int,
-        services: List<ServicePerformed>,
+        services: List<BookingRepository.ServicePerformed>,
         observations: String?,
         imageUrls: List<String>?,
         finalPriceAmount: Double?,

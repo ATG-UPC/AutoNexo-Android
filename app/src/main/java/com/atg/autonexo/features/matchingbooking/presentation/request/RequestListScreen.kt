@@ -239,7 +239,7 @@ fun RequestListScreen(
             MakeOfferDialog(
                 serviceRequestId = selectedRequestId,
                 onDismiss = { showOfferDialog = false },
-                onSendOffer = { price, date, time, details ->
+                onSendOffer = { price, dateTime, message ->
                     showOfferDialog = false
                     scope.launch {
                         snackbarHostState.showSnackbar("Offer sent successfully!")
