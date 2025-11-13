@@ -44,6 +44,16 @@ class UserPreferences @Inject constructor(
         return if (id == -1L) null else id
     }
     
+    // ========== User Email Management ==========
+    
+    fun saveUserEmail(email: String) {
+        prefs.edit().putString(KEY_USER_EMAIL, email).apply()
+    }
+    
+    fun getUserEmail(): String? {
+        return prefs.getString(KEY_USER_EMAIL, null)
+    }
+    
     // ========== Workshop Management ==========
     
     fun setIsWorkshopManager(isManager: Boolean) {
@@ -71,6 +81,7 @@ class UserPreferences @Inject constructor(
     companion object {
         private const val KEY_AUTH_TOKEN = "auth_token"
         private const val KEY_USER_ID = "user_id"
+        private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_IS_WORKSHOP_MANAGER = "is_workshop_manager"
         private const val KEY_HAS_WORKSHOP = "has_workshop"
     }

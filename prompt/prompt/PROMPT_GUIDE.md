@@ -1,0 +1,1 @@
+- Cualquier MD de resumen debe ser realizado en la carpeta prompt, en una carpeta propia. 

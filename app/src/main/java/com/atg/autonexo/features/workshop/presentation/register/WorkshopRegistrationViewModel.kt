@@ -77,8 +77,8 @@ data class WorkshopRegistrationUiState(
 
 @HiltViewModel
 class WorkshopRegistrationViewModel @Inject constructor(
-    private val userPreferences: com.atg.autonexo.core.data.UserPreferences
-    // TODO: Inject repositories when ready
+    private val userPreferences: com.atg.autonexo.core.data.UserPreferences,
+    private val workshopRepository: com.atg.autonexo.features.workshop.domain.repositories.WorkshopRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(WorkshopRegistrationUiState())
@@ -179,7 +179,6 @@ class WorkshopRegistrationViewModel @Inject constructor(
     }
     
     fun registerWorkshop() {
-        // Siempre permitir guardar y mostrar éxito
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
@@ -188,16 +187,51 @@ class WorkshopRegistrationViewModel @Inject constructor(
             )
             
             try {
-                // TODO: Implement actual registration logic real
-                kotlinx.coroutines.delay(1000)
-            } finally {
+                // Llamar al repositorio para crear el workshop
+                val result = workshopRepository.createWorkshop(
+                    name = _uiState.value.workshopName,
+                    description = _uiState.value.description.ifBlank { "Taller mecánico especializado" },
+                    contactEmail = userPreferences.getUserEmail() ?: "contacto@taller.com",
+                    contactPhone = _uiState.value.ruc.ifBlank { "999999999" },
+                    address = _uiState.value.address,
+                    district = _uiState.value.district,
+                    city = _uiState.value.city,
+                    latitude = -12.0464, // Lima, Perú - coordenadas por defecto
+                    longitude = -77.0428
+                )
+                
+                when (result) {
+                    is com.atg.autonexo.features.iam.domain.models.AuthResult.Success -> {
+                        // Éxito - persistir que ya tiene workshop
+                        userPreferences.setHasWorkshop(true)
+                        userPreferences.setIsWorkshopManager(true)
+                        
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            showSuccessDialog = true
+                        )
+                    }
+                    is com.atg.autonexo.features.iam.domain.models.AuthResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            showErrorDialog = true,
+                            errorMessage = result.message
+                        )
+                    }
+                    else -> {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            showErrorDialog = true,
+                            errorMessage = "Error desconocido"
+                        )
+                    }
+                }
+            } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    showSuccessDialog = true
+                    showErrorDialog = true,
+                    errorMessage = e.message ?: "Error al crear taller"
                 )
-                // Persistir que ya tiene workshop y es manager
-                userPreferences.setHasWorkshop(true)
-                userPreferences.setIsWorkshopManager(true)
             }
         }
     }

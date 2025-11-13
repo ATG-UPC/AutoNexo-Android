@@ -67,9 +67,10 @@ class AuthRepositoryImpl @Inject constructor(
                     if (loginResponse != null) {
                         Log.d(TAG, "Sign in successful for: $email")
                         
-                        // Guardar token en SharedPreferences
+                        // Guardar token y datos de usuario en SharedPreferences
                         userPreferences.saveAuthToken(loginResponse.token)
                         userPreferences.saveUserId(loginResponse.user.id)
+                        userPreferences.saveUserEmail(loginResponse.user.email)
                         
                         // Mapear UserDto a User (dominio)
                         val user = loginResponse.user.toDomainModel()
@@ -186,6 +187,280 @@ class AuthRepositoryImpl @Inject constructor(
     
     override fun isAuthenticated(): Boolean {
         return userPreferences.isLoggedIn()
+    }
+    
+    override suspend fun refreshCurrentUser(): AuthResult<User> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Refreshing current user from backend")
+            val response = authService.getCurrentUser()
+            
+            if (response.isSuccessful) {
+                val userDto = response.body()
+                if (userDto != null) {
+                    val user = userDto.toDomainModel()
+                    
+                    // Actualizar en Room
+                    userDao.insertUser(user.toEntity())
+                    
+                    return@withContext AuthResult.Success(user)
+                } else {
+                    return@withContext AuthResult.Error("Empty response from server")
+                }
+            } else {
+                val errorMessage = when (response.code()) {
+                    401 -> "Sesión expirada. Inicia sesión nuevamente"
+                    else -> "Error al obtener perfil"
+                }
+                Log.e(TAG, "Refresh user failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Refresh user exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun updateProfile(
+        firstName: String,
+        lastName: String,
+        phoneNumber: String
+    ): AuthResult<User> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Updating profile")
+            val request = com.atg.autonexo.features.iam.data.remote.models.UpdateProfileRequestDto(
+                firstName = firstName,
+                lastName = lastName,
+                phoneNumber = phoneNumber
+            )
+            
+            val response = authService.updateProfile(request)
+            
+            if (response.isSuccessful) {
+                val userDto = response.body()
+                if (userDto != null) {
+                    val user = userDto.toDomainModel()
+                    
+                    // Actualizar en Room
+                    userDao.insertUser(user.toEntity())
+                    
+                    return@withContext AuthResult.Success(user)
+                } else {
+                    return@withContext AuthResult.Error("Empty response from server")
+                }
+            } else {
+                val errorMessage = when (response.code()) {
+                    400 -> "Datos inválidos"
+                    401 -> "Sesión expirada"
+                    else -> "Error al actualizar perfil"
+                }
+                Log.e(TAG, "Update profile failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Update profile exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun changePassword(
+        currentPassword: String,
+        newPassword: String
+    ): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Changing password")
+            val request = com.atg.autonexo.features.iam.data.remote.models.ChangePasswordRequestDto(
+                currentPassword = currentPassword,
+                newPassword = newPassword
+            )
+            
+            val response = authService.changePassword(request)
+            
+            if (response.isSuccessful) {
+                val message = response.body() ?: "Contraseña actualizada exitosamente"
+                return@withContext AuthResult.Success(message)
+            } else {
+                val errorMessage = when (response.code()) {
+                    400 -> "Datos inválidos"
+                    401 -> "Contraseña actual incorrecta"
+                    else -> "Error al cambiar contraseña"
+                }
+                Log.e(TAG, "Change password failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Change password exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun deactivateAccount(): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Deactivating account")
+            val response = authService.deactivateAccount()
+            
+            if (response.isSuccessful) {
+                // Limpiar datos locales
+                signOut()
+                
+                val message = response.body() ?: "Cuenta desactivada exitosamente"
+                return@withContext AuthResult.Success(message)
+            } else {
+                val errorMessage = "Error al desactivar cuenta"
+                Log.e(TAG, "Deactivate account failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Deactivate account exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun resendVerificationEmail(email: String): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Resending verification email")
+            val request = com.atg.autonexo.features.iam.data.remote.models.ResendVerificationRequestDto(email)
+            
+            val response = authService.resendVerificationEmail(request)
+            
+            if (response.isSuccessful) {
+                val message = response.body() ?: "Email de verificación enviado"
+                return@withContext AuthResult.Success(message)
+            } else {
+                val errorMessage = when (response.code()) {
+                    400 -> "Email inválido"
+                    404 -> "Usuario no encontrado"
+                    else -> "Error al enviar email"
+                }
+                Log.e(TAG, "Resend verification failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Resend verification exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun verifyEmail(token: String): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Verifying email")
+            val request = com.atg.autonexo.features.iam.data.remote.models.VerifyEmailRequestDto(token)
+            
+            val response = authService.verifyEmail(request)
+            
+            if (response.isSuccessful) {
+                val message = response.body() ?: "Email verificado exitosamente"
+                return@withContext AuthResult.Success(message)
+            } else {
+                val errorMessage = when (response.code()) {
+                    400 -> "Token inválido o expirado"
+                    404 -> "Usuario no encontrado"
+                    else -> "Error al verificar email"
+                }
+                Log.e(TAG, "Verify email failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Verify email exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun getVerificationStatus(email: String): AuthResult<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Getting verification status")
+            val response = authService.getVerificationStatus(email)
+            
+            if (response.isSuccessful) {
+                val statusDto = response.body()
+                val isVerified = statusDto?.isVerified ?: false
+                return@withContext AuthResult.Success(isVerified)
+            } else {
+                val errorMessage = "Error al obtener estado de verificación"
+                Log.e(TAG, "Get verification status failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Get verification status exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun requestPasswordReset(email: String): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Requesting password reset")
+            val request = com.atg.autonexo.features.iam.data.remote.models.ForgotPasswordRequestDto(email)
+            
+            val response = authService.requestPasswordReset(request)
+            
+            if (response.isSuccessful) {
+                val message = response.body() ?: "Se ha enviado un email con instrucciones"
+                return@withContext AuthResult.Success(message)
+            } else {
+                val errorMessage = when (response.code()) {
+                    404 -> "Email no encontrado"
+                    else -> "Error al solicitar reset de contraseña"
+                }
+                Log.e(TAG, "Request password reset failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Request password reset exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
+    }
+    
+    override suspend fun resetPassword(token: String, newPassword: String): AuthResult<String> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Resetting password")
+            val request = com.atg.autonexo.features.iam.data.remote.models.ResetPasswordRequestDto(
+                token = token,
+                newPassword = newPassword
+            )
+            
+            val response = authService.resetPassword(request)
+            
+            if (response.isSuccessful) {
+                val message = response.body() ?: "Contraseña restablecida exitosamente"
+                return@withContext AuthResult.Success(message)
+            } else {
+                val errorMessage = when (response.code()) {
+                    400 -> "Token inválido o expirado"
+                    else -> "Error al restablecer contraseña"
+                }
+                Log.e(TAG, "Reset password failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Reset password exception", e)
+            return@withContext AuthResult.Error(
+                e.message ?: "Error de conexión",
+                null
+            )
+        }
     }
     
     // ========== Helper Methods ==========
