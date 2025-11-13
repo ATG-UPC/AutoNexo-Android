@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -29,32 +31,42 @@ import com.atg.autonexo.features.matchingbooking.presentation.offer.MakeOfferDia
 fun RequestDetailScreen(
     requestId: String,
     onNavigateBack: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    viewModel: RequestDetailViewModel = androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var showOfferDialog by remember { mutableStateOf(false) }
-    var showSuccess by remember { mutableStateOf(false) }
-    var showError by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(requestId) {
+        viewModel.loadServiceRequest(requestId)
+    }
+    
+    LaunchedEffect(uiState.offerCreated) {
+        if (uiState.offerCreated) {
+            showOfferDialog = false
+            viewModel.resetOfferCreated()
+        }
+    }
 
     // Dialogos de resultado usando componentes existentes
-    if (showSuccess) {
-        // Reutilizamos un AlertDialog simple para no crear nuevos componentes
+    if (uiState.offerCreated) {
         AlertDialog(
-            onDismissRequest = { showSuccess = false },
+            onDismissRequest = { viewModel.resetOfferCreated() },
             confirmButton = {
-                TextButton(onClick = { showSuccess = false }) { Text("OK") }
+                TextButton(onClick = { viewModel.resetOfferCreated() }) { Text("OK") }
             },
             title = { Text("Success!") },
-            text = { Text("The request was sent successfully.") }
+            text = { Text("The offer was sent successfully.") }
         )
     }
-    if (showError) {
+    if (uiState.errorMessage != null) {
         AlertDialog(
-            onDismissRequest = { showError = false },
+            onDismissRequest = { /* Error will be cleared on next state update */ },
             confirmButton = {
-                TextButton(onClick = { showError = false }) { Text("OK") }
+                TextButton(onClick = { /* Error will be cleared on next state update */ }) { Text("OK") }
             },
             title = { Text("Error") },
-            text = { Text("There was an error during the process.") }
+            text = { Text(uiState.errorMessage ?: "There was an error during the process.") }
         )
     }
 
@@ -267,11 +279,10 @@ fun RequestDetailScreen(
         MakeOfferDialog(
             serviceRequestId = requestId,
             onDismiss = { showOfferDialog = false },
-            onSendOffer = { _, _, _, _ ->
-                showOfferDialog = false
-                // Simular éxito
-                showSuccess = true
-            }
+            onSendOffer = { price, dateTime, message ->
+                viewModel.createOffer(requestId, price, dateTime, message)
+            },
+            isLoading = uiState.isCreatingOffer
         )
     }
 }}

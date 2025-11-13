@@ -6,12 +6,14 @@ import com.atg.autonexo.features.matchingbooking.domain.models.Offer
 interface OfferRepository {
     suspend fun createOffer(
         serviceRequestId: String,
-        estimatedPrice: Double,
-        estimatedDuration: Int,
-        description: String
+        proposedPriceAmount: Double,
+        currency: String,
+        proposedDate: String?,
+        message: String?
     ): AuthResult<Offer>
     
     suspend fun getMyWorkshopOffers(status: String?, page: Int?, size: Int?): AuthResult<List<Offer>>
+    suspend fun getOffersByServiceRequest(serviceRequestId: String): AuthResult<List<Offer>>
     suspend fun getOfferById(offerId: String): AuthResult<Offer>
     suspend fun withdrawOffer(offerId: String): AuthResult<String>
 }

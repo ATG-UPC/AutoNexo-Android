@@ -2,21 +2,28 @@ package com.atg.autonexo.features.matchingbooking.data.remote.models
 
 import com.google.gson.annotations.SerializedName
 
+/**
+ * DTO para Service Booking - Coincide con ServiceBookingResource del backend
+ */
 data class BookingDto(
-    @SerializedName("id") val id: String,
-    @SerializedName("serviceRequestId") val serviceRequestId: String,
-    @SerializedName("offerId") val offerId: String,
-    @SerializedName("workshopId") val workshopId: String,
-    @SerializedName("workshopName") val workshopName: String? = null,
-    @SerializedName("carOwnerId") val carOwnerId: String,
-    @SerializedName("vehicleId") val vehicleId: String,
-    @SerializedName("scheduledDateTime") val scheduledDateTime: String,
-    @SerializedName("status") val status: String, // PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED
-    @SerializedName("agreedPrice") val agreedPrice: Double,
-    @SerializedName("finalPrice") val finalPrice: Double? = null,
-    @SerializedName("workPerformed") val workPerformed: String? = null,
-    @SerializedName("notes") val notes: String? = null,
-    @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("updatedAt") val updatedAt: String? = null,
-    @SerializedName("completedAt") val completedAt: String? = null
+    @SerializedName("id") val id: Long?,
+    @SerializedName("serviceRequestId") val serviceRequestId: Long?,
+    @SerializedName("offerId") val offerId: Long?,
+    @SerializedName("userId") val userId: Long?,
+    @SerializedName("vehicleId") val vehicleId: Long?,
+    @SerializedName("workshopId") val workshopId: Long?,
+    @SerializedName("scheduledDate") val scheduledDate: String?,
+    @SerializedName("proposedPriceAmount") val proposedPriceAmount: Double?,
+    @SerializedName("proposedPriceCurrency") val proposedPriceCurrency: String?,
+    @SerializedName("finalPriceAmount") val finalPriceAmount: Double?,
+    @SerializedName("finalPriceCurrency") val finalPriceCurrency: String?,
+    @SerializedName("status") val status: String?,
+    @SerializedName("servicesToPerform") val servicesToPerform: List<String>?,
+    @SerializedName("description") val description: String?,
+    @SerializedName("createdAt") val createdAt: String?,
+    @SerializedName("completedAt") val completedAt: String?,
+    @SerializedName("pickedUpAt") val pickedUpAt: String?,
+    @SerializedName("cancelledAt") val cancelledAt: String?,
+    @SerializedName("cancelledBy") val cancelledBy: Long?,
+    @SerializedName("cancellationReason") val cancellationReason: String?
 )

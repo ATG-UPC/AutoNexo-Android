@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.atg.autonexo.features.iam.domain.models.AuthResult
 import com.atg.autonexo.features.matchingbooking.domain.model.ServiceRequestStatus
 import com.atg.autonexo.features.matchingbooking.domain.model.ServiceType
+import com.atg.autonexo.features.matchingbooking.domain.repositories.OfferRepository
 import com.atg.autonexo.features.matchingbooking.domain.repositories.ServiceRequestRepository
 import com.atg.autonexo.features.matchingbooking.presentation.request.models.ServiceRequestUi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RequestListViewModel @Inject constructor(
-    private val serviceRequestRepository: ServiceRequestRepository
+    private val serviceRequestRepository: ServiceRequestRepository,
+    private val offerRepository: com.atg.autonexo.features.matchingbooking.domain.repositories.OfferRepository
 ) : ViewModel() {
 
     companion object {
@@ -52,21 +54,28 @@ class RequestListViewModel @Inject constructor(
                         val requests = result.data
                         Log.d(TAG, "Se obtuvieron ${requests.size} service requests")
                         
+                        // Fetch offer counts for all requests
+                        val offerCountsMap = mutableMapOf<String, Int>()
+                        requests.forEach { request ->
+                            val count = getOfferCount(request.id.toString())
+                            offerCountsMap[request.id.toString()] = count
+                        }
+                        
                         // Mapear a UI model
                         val requestsUi = requests.map { request ->
                             ServiceRequestUi(
                                 serviceRequestId = request.id.toString(),
                                 ownerId = request.userId.toString(),
-                                ownerName = "Usuario ${request.userId}", // TODO: Obtener nombre real del usuario
-                                ownerRating = 4.0, // TODO: Obtener rating real
+                                ownerName = "Usuario ${request.userId}", // TODO: Obtener nombre real del usuario - requiere endpoint de usuario
+                                ownerRating = 4.0, // TODO: Obtener rating real - requiere endpoint de rating
                                 vehicleId = request.vehicleId.toString(),
-                                vehicleDescription = "Vehículo ${request.vehicleId}", // TODO: Obtener descripción real del vehículo
+                                vehicleDescription = "Vehículo ${request.vehicleId}", // TODO: Obtener descripción real del vehículo - requiere endpoint de vehículo
                                 serviceType = mapServicesToType(request.requestedServices),
                                 description = request.description,
                                 requestedDate = formatDate(request.createdAt),
                                 status = mapStatus(request.status),
                                 timestamp = calculateTimestamp(request.createdAt),
-                                offerCount = 0 // TODO: Obtener conteo real de ofertas
+                                offerCount = offerCountsMap[request.id.toString()] ?: 0
                             )
                         }
                         
@@ -128,20 +137,28 @@ class RequestListViewModel @Inject constructor(
                 when (result) {
                     is AuthResult.Success -> {
                         val requests = result.data
+                        
+                        // Fetch offer counts for all requests
+                        val offerCountsMap = mutableMapOf<String, Int>()
+                        requests.forEach { request ->
+                            val count = getOfferCount(request.id.toString())
+                            offerCountsMap[request.id.toString()] = count
+                        }
+                        
                         val requestsUi = requests.map { request ->
                             ServiceRequestUi(
                                 serviceRequestId = request.id.toString(),
                                 ownerId = request.userId.toString(),
-                                ownerName = "Usuario ${request.userId}",
-                                ownerRating = 4.0,
+                                ownerName = "Usuario ${request.userId}", // TODO: Obtener nombre real del usuario - requiere endpoint de usuario
+                                ownerRating = 4.0, // TODO: Obtener rating real - requiere endpoint de rating
                                 vehicleId = request.vehicleId.toString(),
-                                vehicleDescription = "Vehículo ${request.vehicleId}",
+                                vehicleDescription = "Vehículo ${request.vehicleId}", // TODO: Obtener descripción real del vehículo - requiere endpoint de vehículo
                                 serviceType = mapServicesToType(request.requestedServices),
                                 description = request.description,
                                 requestedDate = formatDate(request.createdAt),
                                 status = mapStatus(request.status),
                                 timestamp = calculateTimestamp(request.createdAt),
-                                offerCount = 0
+                                offerCount = offerCountsMap[request.id.toString()] ?: 0
                             )
                         }
                         
@@ -234,6 +251,19 @@ class RequestListViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             "N/A"
+        }
+    }
+    
+    private suspend fun getOfferCount(serviceRequestId: String): Int {
+        return try {
+            val result = offerRepository.getOffersByServiceRequest(serviceRequestId)
+            when (result) {
+                is AuthResult.Success -> result.data.size
+                else -> 0
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting offer count for request $serviceRequestId", e)
+            0
         }
     }
 }

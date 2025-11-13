@@ -5,15 +5,36 @@ import com.google.gson.annotations.SerializedName
 /**
  * Request DTO para completar un servicio
  * Endpoint: POST /api/service-bookings/{id}/complete
+ * Coincide con MarkCompletedResource del backend
  */
 data class CompleteServiceRequestDto(
-    @SerializedName("workPerformed")
-    val workPerformed: String?,
+    @SerializedName("mileage")
+    val mileage: Int,
     
-    @SerializedName("notes")
-    val notes: String?,
+    @SerializedName("services")
+    val services: List<ServicePerformedDto>,
     
-    @SerializedName("finalPrice")
-    val finalPrice: Double?
-)
+    @SerializedName("observations")
+    val observations: String?,
+    
+    @SerializedName("imageUrls")
+    val imageUrls: List<String>?,
+    
+    @SerializedName("finalPriceAmount")
+    val finalPriceAmount: Double?,
+    
+    @SerializedName("currency")
+    val currency: String?
+) {
+    data class ServicePerformedDto(
+        @SerializedName("serviceType")
+        val serviceType: String,
+        
+        @SerializedName("description")
+        val description: String?,
+        
+        @SerializedName("cost")
+        val cost: Double
+    )
+}
 

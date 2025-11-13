@@ -4,9 +4,11 @@ import com.atg.autonexo.features.matchingbooking.data.remote.services.BookingSer
 import com.atg.autonexo.features.matchingbooking.data.remote.services.OfferService
 import com.atg.autonexo.features.matchingbooking.data.remote.services.ServiceRequestService
 import com.atg.autonexo.features.matchingbooking.data.repositories.BookingRepositoryImpl
+import com.atg.autonexo.features.matchingbooking.data.repositories.HomeRepositoryImpl
 import com.atg.autonexo.features.matchingbooking.data.repositories.OfferRepositoryImpl
 import com.atg.autonexo.features.matchingbooking.data.repositories.ServiceRequestRepositoryImpl
 import com.atg.autonexo.features.matchingbooking.domain.repositories.BookingRepository
+import com.atg.autonexo.features.matchingbooking.domain.repositories.HomeRepository
 import com.atg.autonexo.features.matchingbooking.domain.repositories.OfferRepository
 import com.atg.autonexo.features.matchingbooking.domain.repositories.ServiceRequestRepository
 import dagger.Module
@@ -60,6 +62,14 @@ object MatchingBookingDataModule {
         bookingService: BookingService
     ): BookingRepository {
         return BookingRepositoryImpl(bookingService)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideHomeRepository(
+        bookingRepository: BookingRepository
+    ): HomeRepository {
+        return HomeRepositoryImpl(bookingRepository)
     }
 }
 

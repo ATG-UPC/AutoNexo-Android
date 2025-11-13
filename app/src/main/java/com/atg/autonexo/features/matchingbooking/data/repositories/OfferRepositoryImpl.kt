@@ -21,17 +21,22 @@ class OfferRepositoryImpl @Inject constructor(
     
     override suspend fun createOffer(
         serviceRequestId: String,
-        estimatedPrice: Double,
-        estimatedDuration: Int,
-        description: String
+        proposedPriceAmount: Double,
+        currency: String,
+        proposedDate: String?,
+        message: String?
     ): AuthResult<Offer> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Creating offer for request: $serviceRequestId")
+            val serviceRequestIdLong = serviceRequestId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid service request ID format", null)
+            
             val request = CreateOfferRequestDto(
-                serviceRequestId = serviceRequestId,
-                estimatedPrice = estimatedPrice,
-                estimatedDuration = estimatedDuration,
-                description = description
+                serviceRequestId = serviceRequestIdLong,
+                proposedPriceAmount = proposedPriceAmount,
+                currency = currency,
+                proposedDate = proposedDate,
+                message = message
             )
             
             val response = offerService.createOffer(request)
@@ -80,10 +85,36 @@ class OfferRepositoryImpl @Inject constructor(
         }
     }
     
+    override suspend fun getOffersByServiceRequest(serviceRequestId: String): AuthResult<List<Offer>> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Getting offers by service request: $serviceRequestId")
+            val serviceRequestIdLong = serviceRequestId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid service request ID format", null)
+            
+            val response = offerService.getOffersByServiceRequest(serviceRequestIdLong)
+            
+            if (response.isSuccessful) {
+                val offerDtos = response.body() ?: emptyList()
+                val offers = offerDtos.map { it.toDomainModel() }
+                return@withContext AuthResult.Success(offers)
+            } else {
+                val errorMessage = "Error al obtener ofertas"
+                Log.e(TAG, "Get offers by service request failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Get offers by service request exception", e)
+            return@withContext AuthResult.Error(e.message ?: "Error de conexión", null)
+        }
+    }
+    
     override suspend fun getOfferById(offerId: String): AuthResult<Offer> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Getting offer by id: $offerId")
-            val response = offerService.getOfferById(offerId)
+            val offerIdLong = offerId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid offer ID format", null)
+            
+            val response = offerService.getOfferById(offerIdLong)
             
             if (response.isSuccessful) {
                 val offerDto = response.body()
@@ -110,7 +141,10 @@ class OfferRepositoryImpl @Inject constructor(
     override suspend fun withdrawOffer(offerId: String): AuthResult<String> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Withdrawing offer: $offerId")
-            val response = offerService.withdrawOffer(offerId)
+            val offerIdLong = offerId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid offer ID format", null)
+            
+            val response = offerService.withdrawOffer(offerIdLong)
             
             if (response.isSuccessful) {
                 val message = response.body() ?: "Oferta retirada"
@@ -128,18 +162,20 @@ class OfferRepositoryImpl @Inject constructor(
     
     private fun OfferDto.toDomainModel(): Offer {
         return Offer(
-            id = id,
-            serviceRequestId = serviceRequestId,
-            workshopId = workshopId,
-            workshopName = workshopName ?: "",
-            workshopRating = workshopRating,
-            estimatedPrice = estimatedPrice,
-            estimatedDuration = estimatedDuration,
-            description = description,
-            status = status,
-            validUntil = validUntil,
-            createdAt = createdAt,
-            updatedAt = updatedAt
+            id = id?.toString() ?: "0",
+            serviceRequestId = serviceRequestId?.toString() ?: "0",
+            workshopId = workshopId?.toString() ?: "0",
+            workshopName = "", // Backend doesn't provide workshop name in offer resource
+            workshopRating = null, // Backend doesn't provide rating in offer resource
+            estimatedPrice = proposedPriceAmount ?: 0.0,
+            estimatedDuration = 0, // Backend doesn't provide duration in offer resource
+            description = message ?: "",
+            status = status ?: "PENDING",
+            validUntil = expiresAt ?: "",
+            createdAt = createdAt ?: "",
+            updatedAt = null,
+            currency = currency,
+            proposedDate = proposedDate
         )
     }
 }

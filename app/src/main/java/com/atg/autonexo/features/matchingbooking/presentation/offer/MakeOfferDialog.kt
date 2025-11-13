@@ -22,7 +22,8 @@ import androidx.compose.ui.window.DialogProperties
 fun MakeOfferDialog(
     serviceRequestId: String,
     onDismiss: () -> Unit,
-    onSendOffer: (String, String, String, String) -> Unit
+    onSendOffer: (price: Double, dateTime: String, message: String) -> Unit,
+    isLoading: Boolean = false
 ) {
     var minimumPrice by remember { mutableStateOf("") }
     var appointmentDate by remember { mutableStateOf("") }
@@ -204,7 +205,25 @@ fun MakeOfferDialog(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Button(
-                            onClick = { onSendOffer(minimumPrice, appointmentDate, appointmentTime, details) },
+                            onClick = {
+                                val price = minimumPrice.toDoubleOrNull() ?: 0.0
+                                // Combine date and time into ISO format
+                                val dateTime = try {
+                                    val datePart = appointmentDate.trim()
+                                    val timePart = appointmentTime.trim()
+                                    // Assume format like "dd/MM/yyyy" for date and "HH:mm" for time
+                                    // Convert to ISO format: "yyyy-MM-ddTHH:mm:ss"
+                                    val dateTimeStr = "$datePart $timePart"
+                                    // Try to parse and format
+                                    val inputFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                                    val dateTimeObj = java.time.LocalDateTime.parse(dateTimeStr, inputFormatter)
+                                    dateTimeObj.format(java.time.format.DateTimeFormatter.ISO_DATE_TIME)
+                                } catch (e: Exception) {
+                                    // Fallback: just combine as-is
+                                    "${appointmentDate}T${appointmentTime}:00"
+                                }
+                                onSendOffer(price, dateTime, details)
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(52.dp),
@@ -213,7 +232,7 @@ fun MakeOfferDialog(
                                 containerColor = Color(0xFF4682B4),
                                 disabledContainerColor = Color(0xFFD9D9D9)
                             ),
-                            enabled = isSendEnabled
+                            enabled = isSendEnabled && !isLoading
                         ) {
                             Text(
                                 text = "Send Offer",

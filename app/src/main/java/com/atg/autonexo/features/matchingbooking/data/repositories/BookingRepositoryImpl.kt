@@ -4,6 +4,8 @@ import android.util.Log
 import com.atg.autonexo.features.iam.domain.models.AuthResult
 import com.atg.autonexo.features.matchingbooking.data.remote.models.BookingDto
 import com.atg.autonexo.features.matchingbooking.data.remote.models.CompleteServiceRequestDto
+import com.atg.autonexo.features.matchingbooking.data.remote.models.ConfirmScheduleDto
+import com.atg.autonexo.features.matchingbooking.data.remote.models.ProposeScheduleChangeDto
 import com.atg.autonexo.features.matchingbooking.data.remote.services.BookingService
 import com.atg.autonexo.features.matchingbooking.domain.models.Booking
 import com.atg.autonexo.features.matchingbooking.domain.repositories.BookingRepository
@@ -42,7 +44,10 @@ class BookingRepositoryImpl @Inject constructor(
     override suspend fun getBookingById(bookingId: String): AuthResult<Booking> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Getting booking by id: $bookingId")
-            val response = bookingService.getBookingById(bookingId)
+            val bookingIdLong = bookingId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid booking ID format", null)
+            
+            val response = bookingService.getBookingById(bookingIdLong)
             
             if (response.isSuccessful) {
                 val bookingDto = response.body()
@@ -66,10 +71,14 @@ class BookingRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun confirmSchedule(bookingId: String): AuthResult<Booking> = withContext(Dispatchers.IO) {
+    override suspend fun confirmSchedule(bookingId: String, scheduledDate: String): AuthResult<Booking> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Confirming schedule for booking: $bookingId")
-            val response = bookingService.confirmSchedule(bookingId)
+            val bookingIdLong = bookingId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid booking ID format", null)
+            
+            val request = ConfirmScheduleDto(scheduledDate)
+            val response = bookingService.confirmSchedule(bookingIdLong, request)
             
             if (response.isSuccessful) {
                 val bookingDto = response.body()
@@ -90,11 +99,64 @@ class BookingRepositoryImpl @Inject constructor(
         }
     }
     
-    override suspend fun completeService(bookingId: String, workPerformed: String?, notes: String?, finalPrice: Double?): AuthResult<Booking> = withContext(Dispatchers.IO) {
+    override suspend fun proposeScheduleChange(bookingId: String, newScheduledDate: String): AuthResult<Booking> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "Proposing schedule change for booking: $bookingId")
+            val bookingIdLong = bookingId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid booking ID format", null)
+            
+            val request = ProposeScheduleChangeDto(newScheduledDate)
+            val response = bookingService.proposeScheduleChange(bookingIdLong, request)
+            
+            if (response.isSuccessful) {
+                val bookingDto = response.body()
+                if (bookingDto != null) {
+                    val booking = bookingDto.toDomainModel()
+                    return@withContext AuthResult.Success(booking)
+                } else {
+                    return@withContext AuthResult.Error("Empty response from server")
+                }
+            } else {
+                val errorMessage = "Error al proponer cambio de horario"
+                Log.e(TAG, "Propose schedule change failed: ${response.code()}")
+                return@withContext AuthResult.Error(errorMessage, response.code())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Propose schedule change exception", e)
+            return@withContext AuthResult.Error(e.message ?: "Error de conexión", null)
+        }
+    }
+    
+    override suspend fun completeService(
+        bookingId: String,
+        mileage: Int,
+        services: List<ServicePerformed>,
+        observations: String?,
+        imageUrls: List<String>?,
+        finalPriceAmount: Double?,
+        currency: String?
+    ): AuthResult<Booking> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Completing service for booking: $bookingId")
-            val request = CompleteServiceRequestDto(workPerformed, notes, finalPrice)
-            val response = bookingService.completeService(bookingId, request)
+            val bookingIdLong = bookingId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid booking ID format", null)
+            
+            val servicesDto = services.map { service ->
+                CompleteServiceRequestDto.ServicePerformedDto(
+                    serviceType = service.serviceType,
+                    description = service.description,
+                    cost = service.cost
+                )
+            }
+            val request = CompleteServiceRequestDto(
+                mileage = mileage,
+                services = servicesDto,
+                observations = observations,
+                imageUrls = imageUrls,
+                finalPriceAmount = finalPriceAmount,
+                currency = currency
+            )
+            val response = bookingService.completeService(bookingIdLong, request)
             
             if (response.isSuccessful) {
                 val bookingDto = response.body()
@@ -118,7 +180,10 @@ class BookingRepositoryImpl @Inject constructor(
     override suspend fun cancelBooking(bookingId: String): AuthResult<String> = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Canceling booking: $bookingId")
-            val response = bookingService.cancelBooking(bookingId)
+            val bookingIdLong = bookingId.toLongOrNull()
+                ?: return@withContext AuthResult.Error("Invalid booking ID format", null)
+            
+            val response = bookingService.cancelBooking(bookingIdLong)
             
             if (response.isSuccessful) {
                 val message = response.body() ?: "Reserva cancelada"
@@ -136,20 +201,20 @@ class BookingRepositoryImpl @Inject constructor(
     
     private fun BookingDto.toDomainModel(): Booking {
         return Booking(
-            id = id,
-            serviceRequestId = serviceRequestId,
-            offerId = offerId,
-            workshopId = workshopId,
-            workshopName = workshopName ?: "",
-            carOwnerId = carOwnerId,
-            vehicleId = vehicleId,
-            scheduledDateTime = scheduledDateTime,
-            status = status,
-            agreedPrice = agreedPrice,
-            finalPrice = finalPrice,
-            workPerformed = workPerformed,
-            notes = notes,
-            createdAt = createdAt,
+            id = id?.toString() ?: "0",
+            serviceRequestId = serviceRequestId?.toString() ?: "0",
+            offerId = offerId?.toString() ?: "0",
+            workshopId = workshopId?.toString() ?: "0",
+            workshopName = "", // Backend doesn't provide workshop name in booking resource
+            carOwnerId = userId?.toString() ?: "0",
+            vehicleId = vehicleId?.toString() ?: "0",
+            scheduledDateTime = scheduledDate ?: "",
+            status = status ?: "PENDING",
+            agreedPrice = proposedPriceAmount ?: 0.0,
+            finalPrice = finalPriceAmount,
+            workPerformed = description,
+            notes = description, // Backend uses description field
+            createdAt = createdAt ?: "",
             completedAt = completedAt
         )
     }

@@ -5,18 +5,22 @@ import com.google.gson.annotations.SerializedName
 /**
  * Request DTO para crear una oferta
  * Endpoint: POST /api/offers
+ * Coincide con CreateOfferResource del backend
  */
 data class CreateOfferRequestDto(
     @SerializedName("serviceRequestId")
-    val serviceRequestId: String,
+    val serviceRequestId: Long,
     
-    @SerializedName("estimatedPrice")
-    val estimatedPrice: Double,
+    @SerializedName("proposedPriceAmount")
+    val proposedPriceAmount: Double,
     
-    @SerializedName("estimatedDuration")
-    val estimatedDuration: Int,
+    @SerializedName("currency")
+    val currency: String,
     
-    @SerializedName("description")
-    val description: String
+    @SerializedName("proposedDate")
+    val proposedDate: String?,
+    
+    @SerializedName("message")
+    val message: String?
 )
 

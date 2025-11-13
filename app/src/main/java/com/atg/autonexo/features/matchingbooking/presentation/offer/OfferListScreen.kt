@@ -1,5 +1,6 @@
 package com.atg.autonexo.features.matchingbooking.presentation.offer
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,8 +22,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.atg.autonexo.core.ui.components.BottomArcShape
 import com.atg.autonexo.core.ui.components.BottomNavBar
+import com.atg.autonexo.features.iam.domain.models.AuthResult
+import com.atg.autonexo.features.matchingbooking.domain.models.Offer
+import com.atg.autonexo.features.matchingbooking.domain.repositories.OfferRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import javax.inject.Inject
 
 @Composable
 fun OfferListScreen(
@@ -29,7 +46,7 @@ fun OfferListScreen(
     onNavigate: (String) -> Unit,
     viewModel: OfferListViewModel = hiltViewModel()
 ) {
-    val uiState = viewModel.uiState
+    val uiState by viewModel.uiState.collectAsState()
     var pendingExpanded by remember { mutableStateOf(true) }
     var realizedExpanded by remember { mutableStateOf(true) }
 
@@ -190,37 +207,135 @@ data class OfferUi(
 
 enum class OfferState { Pending, Realized }
 
-class OfferListViewModel : androidx.lifecycle.ViewModel() {
-    // Datos de ejemplo para UI. Cambia por el estado real cuando haya repositorio.
-    val uiState = OfferUiState(
-        pending = listOf(
-            OfferUi(
-                id = "0002",
-                ownerName = "Sergio Iglesias",
-                description = "I crashed my car into a tree two days ago...",
-                minPrice = "130 soles",
-                appointment = "20/10/2025 13:00",
-                footer = "2h ago",
-                state = OfferState.Pending
-            )
-        ),
-        realized = listOf(
-            OfferUi(
-                id = "0001",
-                ownerName = "Sergio Iglesias",
-                description = "Someone hit the front of my car...",
-                minPrice = "100 soles",
-                appointment = "05/10/2025 10:00",
-                footer = "Realized",
-                state = OfferState.Realized
-            )
+@HiltViewModel
+class OfferListViewModel @Inject constructor(
+    private val offerRepository: OfferRepository
+) : ViewModel() {
+    
+    companion object {
+        private const val TAG = "OfferListViewModel"
+    }
+    
+    private val _uiState = MutableStateFlow(OfferUiState())
+    val uiState: StateFlow<OfferUiState> = _uiState.asStateFlow()
+    
+    init {
+        loadOffers()
+    }
+    
+    fun loadOffers() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            try {
+                Log.d(TAG, "Loading workshop offers...")
+                
+                // Get pending offers
+                val pendingResult = offerRepository.getMyWorkshopOffers("PENDING", null, null)
+                val pendingOffers = when (pendingResult) {
+                    is AuthResult.Success -> pendingResult.data
+                    else -> emptyList()
+                }
+                
+                // Get accepted/rejected offers (realized)
+                val acceptedResult = offerRepository.getMyWorkshopOffers("ACCEPTED", null, null)
+                val rejectedResult = offerRepository.getMyWorkshopOffers("REJECTED", null, null)
+                val acceptedOffers = when (acceptedResult) {
+                    is AuthResult.Success -> acceptedResult.data
+                    else -> emptyList()
+                }
+                val rejectedOffers = when (rejectedResult) {
+                    is AuthResult.Success -> rejectedResult.data
+                    else -> emptyList()
+                }
+                val realizedOffers = acceptedOffers + rejectedOffers
+                
+                val pendingUi = pendingOffers.map { it.toOfferUi(OfferState.Pending) }
+                val realizedUi = realizedOffers.map { it.toOfferUi(OfferState.Realized) }
+                
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        pending = pendingUi,
+                        realized = realizedUi
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception loading offers", e)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = e.message ?: "Error de conexión"
+                    )
+                }
+            }
+        }
+    }
+    
+    private fun Offer.toOfferUi(state: OfferState): OfferUi {
+        val price = "%.2f".format(estimatedPrice)
+        val dateTime = formatOfferDateTime(proposedDate?.takeIf { it.isNotBlank() } ?: validUntil.takeIf { it.isNotBlank() } ?: createdAt)
+        val footer = when (state) {
+            OfferState.Pending -> calculateTimestamp(createdAt)
+            OfferState.Realized -> when (status) {
+                "ACCEPTED" -> "Accepted"
+                "REJECTED" -> "Rejected"
+                else -> "Completed"
+            }
+        }
+        
+        return OfferUi(
+            id = id,
+            ownerName = "Usuario ${serviceRequestId}", // TODO: Get real owner name
+            description = description.ifEmpty { "No description provided" },
+            minPrice = "$price ${currency ?: "soles"}",
+            appointment = dateTime,
+            footer = footer,
+            state = state
         )
-    )
+    }
+    
+    private fun formatOfferDateTime(dateString: String?): String {
+        if (dateString.isNullOrBlank()) return "N/A"
+        
+        return try {
+            val formatter = DateTimeFormatter.ISO_DATE_TIME
+            val date = LocalDateTime.parse(dateString, formatter)
+            val outputFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+            date.format(outputFormatter)
+        } catch (e: Exception) {
+            "N/A"
+        }
+    }
+    
+    private fun calculateTimestamp(dateString: String?): String {
+        if (dateString.isNullOrBlank()) return "N/A"
+        
+        return try {
+            val formatter = DateTimeFormatter.ISO_DATE_TIME
+            val date = LocalDateTime.parse(dateString, formatter)
+            val now = LocalDateTime.now()
+            
+            val hours = ChronoUnit.HOURS.between(date, now)
+            val days = ChronoUnit.DAYS.between(date, now)
+            
+            when {
+                hours < 1 -> "Hace menos de 1 hora"
+                hours < 24 -> "Hace $hours horas"
+                days == 1L -> "Hace 1 día"
+                else -> "Hace $days días"
+            }
+        } catch (e: Exception) {
+            "N/A"
+        }
+    }
 }
 
 data class OfferUiState(
     val pending: List<OfferUi> = emptyList(),
-    val realized: List<OfferUi> = emptyList()
+    val realized: List<OfferUi> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
 )
 
 

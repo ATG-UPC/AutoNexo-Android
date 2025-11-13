@@ -12,5 +12,7 @@ data class Offer(
     val status: String,
     val validUntil: String,
     val createdAt: String,
-    val updatedAt: String?
+    val updatedAt: String?,
+    val currency: String? = null,
+    val proposedDate: String? = null
 )

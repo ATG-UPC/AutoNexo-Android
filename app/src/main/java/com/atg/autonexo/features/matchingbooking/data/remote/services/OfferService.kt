@@ -7,7 +7,7 @@ import retrofit2.http.*
 
 /**
  * Service Retrofit para Offers
- * Base path: /api/offers (sin v1)
+ * Base path: /api/offers
  */
 interface OfferService {
     
@@ -22,9 +22,12 @@ interface OfferService {
         @Query("size") size: Int?
     ): Response<List<OfferDto>>
     
+    @GET("api/offers/service-requests/{requestId}")
+    suspend fun getOffersByServiceRequest(@Path("requestId") requestId: Long): Response<List<OfferDto>>
+    
     @GET("api/offers/{id}")
-    suspend fun getOfferById(@Path("id") offerId: String): Response<OfferDto>
+    suspend fun getOfferById(@Path("id") offerId: Long): Response<OfferDto>
     
     @DELETE("api/offers/{id}")
-    suspend fun withdrawOffer(@Path("id") offerId: String): Response<String>
+    suspend fun withdrawOffer(@Path("id") offerId: Long): Response<String>
 }
