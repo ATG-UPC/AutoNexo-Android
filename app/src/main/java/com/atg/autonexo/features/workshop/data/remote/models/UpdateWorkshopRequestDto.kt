@@ -10,6 +10,9 @@ data class UpdateWorkshopRequestDto(
     @SerializedName("name")
     val name: String?,
     
+    @SerializedName("shortDescription")
+    val shortDescription: String?,
+    
     @SerializedName("description")
     val description: String?,
     

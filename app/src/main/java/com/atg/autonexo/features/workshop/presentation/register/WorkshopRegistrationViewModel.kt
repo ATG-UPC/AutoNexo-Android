@@ -10,15 +10,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class WorkshopRegistrationUiState(
-    // Step 1 fields
+    // Step 1 fields - Campos requeridos para crear workshop según backend
     val workshopName: String = "",
+    val shortDescription: String = "",
+    val legalName: String = "",
     val ruc: String = "",
-    val district: String = "",
-    val city: String = "",
-    val address: String = "",
-    val logoUri: String? = null,
-    val workshopImageUri: String? = null,
-    val services: List<String> = listOf("Tire change"),
     
     // Step 2 fields
     val mondayStart: String = "08:00",
@@ -52,8 +48,22 @@ data class WorkshopRegistrationUiState(
     val showErrorDialog: Boolean = false
 ) {
     val isStep1Valid: Boolean
-        get() = workshopName.isNotBlank() &&
-                (ruc.isEmpty() || (ruc.length >= 8 && ruc.all { it.isDigit() }))
+        get() {
+            // name: requerido, mínimo 3 caracteres, máximo 200 caracteres (usar trim para eliminar espacios)
+            val trimmedName = workshopName.trim()
+            val nameValid = trimmedName.length >= 3 && trimmedName.length <= 200
+            
+            // ruc: opcional, si se proporciona debe tener exactamente 11 dígitos
+            val rucValid = ruc.isEmpty() || (ruc.length == 11 && ruc.all { it.isDigit() })
+            
+            // shortDescription: opcional, máximo 500 caracteres
+            val shortDescriptionValid = shortDescription.length <= 500
+            
+            // legalName: opcional, máximo 300 caracteres
+            val legalNameValid = legalName.length <= 300
+            
+            return nameValid && rucValid && shortDescriptionValid && legalNameValid
+        }
     
     val isStep2Valid: Boolean
         get() {
@@ -86,46 +96,28 @@ class WorkshopRegistrationViewModel @Inject constructor(
     
     // Step 1 updates
     fun updateWorkshopName(value: String) {
-        _uiState.value = _uiState.value.copy(workshopName = value)
+        // Limitar a 200 caracteres según validación del backend
+        val limitedValue = if (value.length > 200) value.take(200) else value
+        _uiState.value = _uiState.value.copy(workshopName = limitedValue)
+    }
+    
+    fun updateShortDescription(value: String) {
+        // Limitar a 500 caracteres según validación del backend
+        val limitedValue = if (value.length > 500) value.take(500) else value
+        _uiState.value = _uiState.value.copy(shortDescription = limitedValue)
+    }
+    
+    fun updateLegalName(value: String) {
+        // Limitar a 300 caracteres según validación del backend
+        val limitedValue = if (value.length > 300) value.take(300) else value
+        _uiState.value = _uiState.value.copy(legalName = limitedValue)
     }
     
     fun updateRuc(value: String) {
+        // Solo permitir dígitos y máximo 11 caracteres (exactamente 11 según backend)
         if (value.all { it.isDigit() } && value.length <= 11) {
             _uiState.value = _uiState.value.copy(ruc = value)
         }
-    }
-    
-    fun updateDistrict(value: String) {
-        _uiState.value = _uiState.value.copy(district = value)
-    }
-    
-    fun updateCity(value: String) {
-        _uiState.value = _uiState.value.copy(city = value)
-    }
-    
-    fun updateAddress(value: String) {
-        _uiState.value = _uiState.value.copy(address = value)
-    }
-    
-    fun updateLogoUri(uri: String?) {
-        _uiState.value = _uiState.value.copy(logoUri = uri)
-    }
-    
-    fun updateWorkshopImageUri(uri: String?) {
-        _uiState.value = _uiState.value.copy(workshopImageUri = uri)
-    }
-    
-    fun addService(service: String) {
-        val currentServices = _uiState.value.services
-        if (service.isNotBlank() && !currentServices.contains(service)) {
-            _uiState.value = _uiState.value.copy(services = currentServices + service)
-        }
-    }
-    
-    fun removeService(service: String) {
-        _uiState.value = _uiState.value.copy(
-            services = _uiState.value.services.filter { it != service }
-        )
     }
     
     // Step 2 updates
@@ -187,17 +179,54 @@ class WorkshopRegistrationViewModel @Inject constructor(
             )
             
             try {
-                // Llamar al repositorio para crear el workshop
+                // Obtener ownerUserId del usuario autenticado
+                val ownerUserId = userPreferences.getUserId()
+                if (ownerUserId == null) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        showErrorDialog = true,
+                        errorMessage = "No se pudo obtener el ID del usuario. Por favor, inicia sesión nuevamente."
+                    )
+                    return@launch
+                }
+                
+                // Validar que el nombre tenga al menos 3 caracteres (usar trim para eliminar espacios)
+                val trimmedName = _uiState.value.workshopName.trim()
+                if (trimmedName.length < 3) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        showErrorDialog = true,
+                        errorMessage = "El nombre del taller debe tener al menos 3 caracteres"
+                    )
+                    return@launch
+                }
+                
+                if (trimmedName.length > 200) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        showErrorDialog = true,
+                        errorMessage = "El nombre del taller no puede tener más de 200 caracteres"
+                    )
+                    return@launch
+                }
+                
+                // Validar RUC si se proporciona
+                if (_uiState.value.ruc.isNotBlank() && (_uiState.value.ruc.length != 11 || !_uiState.value.ruc.all { it.isDigit() })) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        showErrorDialog = true,
+                        errorMessage = "El RUC debe tener exactamente 11 dígitos"
+                    )
+                    return@launch
+                }
+                
+                // Llamar al repositorio para crear el workshop (usar trimmedName)
                 val result = workshopRepository.createWorkshop(
-                    name = _uiState.value.workshopName,
-                    description = _uiState.value.description.ifBlank { "Taller mecánico especializado" },
-                    contactEmail = userPreferences.getUserEmail() ?: "contacto@taller.com",
-                    contactPhone = _uiState.value.ruc.ifBlank { "999999999" },
-                    address = _uiState.value.address,
-                    district = _uiState.value.district,
-                    city = _uiState.value.city,
-                    latitude = -12.0464, // Lima, Perú - coordenadas por defecto
-                    longitude = -77.0428
+                    ownerUserId = ownerUserId,
+                    name = trimmedName,
+                    shortDescription = _uiState.value.shortDescription.trim().takeIf { it.isNotBlank() },
+                    legalName = _uiState.value.legalName.trim().takeIf { it.isNotBlank() },
+                    ruc = _uiState.value.ruc.takeIf { it.isNotBlank() }
                 )
                 
                 when (result) {

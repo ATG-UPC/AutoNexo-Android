@@ -8,8 +8,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -21,45 +25,70 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.atg.autonexo.core.ui.components.BottomArcShape
+import com.atg.autonexo.core.ui.components.SuccessDialog
+import com.atg.autonexo.core.ui.components.ErrorDialog
 import com.atg.autonexo.features.iam.presentation.components.*
 
 @Composable
 fun WorkshopRegistrationStep1Screen(
     onNavigateBack: () -> Unit,
-    onNavigateToStep2: () -> Unit,
-    viewModel: WorkshopRegistrationViewModel = hiltViewModel()
+    onNext: () -> Unit,
+    flowViewModel: WorkshopCreationFlowViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val flowState by flowViewModel.uiState.collectAsState()
+    
+    // Show success dialog
+    if (flowState.showSuccessDialog) {
+        SuccessDialog(
+            message = "Taller creado exitosamente.",
+            onDismiss = {
+                flowViewModel.dismissSuccessDialog()
+                onNext()
+            }
+        )
+    }
+    
+    // Show error dialog
+    if (flowState.showErrorDialog) {
+        ErrorDialog(
+            message = flowState.errorMessage ?: "Hubo un error durante el proceso.",
+            onDismiss = flowViewModel::dismissErrorDialog
+        )
+    }
     
     WorkshopRegistrationStep1Content(
-        uiState = uiState,
-        onWorkshopNameChange = viewModel::updateWorkshopName,
-        onRucChange = viewModel::updateRuc,
-        onDistrictChange = viewModel::updateDistrict,
-        onCityChange = viewModel::updateCity,
-        onAddressChange = viewModel::updateAddress,
-        onLogoClick = { /* TODO: Open image picker */ },
-        onWorkshopImageClick = { /* TODO: Open image picker */ },
-        onAddService = { /* TODO: Show dialog to add service */ },
-        onRemoveService = viewModel::removeService,
-        onNextClick = onNavigateToStep2,
+        workshopName = flowState.workshopName,
+        shortDescription = flowState.shortDescription,
+        legalName = flowState.legalName,
+        ruc = flowState.ruc,
+        isValid = flowState.isStep1Valid,
+        isLoading = flowState.isSaving,
+        onWorkshopNameChange = flowViewModel::updateWorkshopName,
+        onShortDescriptionChange = flowViewModel::updateShortDescription,
+        onLegalNameChange = flowViewModel::updateLegalName,
+        onRucChange = flowViewModel::updateRuc,
+        onSaveClick = {
+            if (flowViewModel.validateAndNextFromStep1()) {
+                flowViewModel.saveBasicWorkshop()
+            }
+        },
         onBackClick = onNavigateBack
     )
 }
 
 @Composable
 private fun WorkshopRegistrationStep1Content(
-    uiState: WorkshopRegistrationUiState,
+    workshopName: String,
+    shortDescription: String,
+    legalName: String,
+    ruc: String,
+    isValid: Boolean,
+    isLoading: Boolean = false,
     onWorkshopNameChange: (String) -> Unit,
+    onShortDescriptionChange: (String) -> Unit,
+    onLegalNameChange: (String) -> Unit,
     onRucChange: (String) -> Unit,
-    onDistrictChange: (String) -> Unit,
-    onCityChange: (String) -> Unit,
-    onAddressChange: (String) -> Unit,
-    onLogoClick: () -> Unit,
-    onWorkshopImageClick: () -> Unit,
-    onAddService: () -> Unit,
-    onRemoveService: (String) -> Unit,
-    onNextClick: () -> Unit,
+    onSaveClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Column(
@@ -90,11 +119,81 @@ private fun WorkshopRegistrationStep1Content(
             )
             
             OutlinedTextField(
-                value = uiState.workshopName,
+                value = workshopName,
                 onValueChange = onWorkshopNameChange,
                 placeholder = {
                     Text(
                         text = "Commercial name (e.g. Adonz Automotive)",
+                        color = Color(0xFF9CA3AF),
+                        fontSize = 14.sp
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4682B4),
+                    unfocusedBorderColor = Color(0xFFD1D5DB),
+                    focusedTextColor = Color(0xFF1A202C),
+                    unfocusedTextColor = Color(0xFF1A202C)
+                ),
+                singleLine = true,
+                textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                )
+            )
+            
+            // Short Description
+            Text(
+                text = "Short Description",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF4682B4)
+            )
+            
+            OutlinedTextField(
+                value = shortDescription,
+                onValueChange = onShortDescriptionChange,
+                placeholder = {
+                    Text(
+                        text = "Brief description of your workshop (optional, max 500 characters)",
+                        color = Color(0xFF9CA3AF),
+                        fontSize = 14.sp
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF4682B4),
+                    unfocusedBorderColor = Color(0xFFD1D5DB),
+                    focusedTextColor = Color(0xFF1A202C),
+                    unfocusedTextColor = Color(0xFF1A202C)
+                ),
+                maxLines = 5,
+                textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                )
+            )
+            
+            // Legal Name
+            Text(
+                text = "Legal Name",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF4682B4)
+            )
+            
+            OutlinedTextField(
+                value = legalName,
+                onValueChange = onLegalNameChange,
+                placeholder = {
+                    Text(
+                        text = "Legal business name (optional, max 300 characters)",
                         color = Color(0xFF9CA3AF),
                         fontSize = 14.sp
                     )
@@ -125,11 +224,11 @@ private fun WorkshopRegistrationStep1Content(
             )
             
             OutlinedTextField(
-                value = uiState.ruc,
+                value = ruc,
                 onValueChange = onRucChange,
                 placeholder = {
                     Text(
-                        text = "Enter a valid RUC number",
+                        text = "Enter a valid RUC number (11 digits, optional)",
                         color = Color(0xFF9CA3AF),
                         fontSize = 14.sp
                     )
@@ -148,120 +247,15 @@ private fun WorkshopRegistrationStep1Content(
                 textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
+                    imeAction = ImeAction.Done
                 )
-            )
-            
-            // District and City Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "District",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF4682B4),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
-                    DistrictCityDropdown(
-                        value = uiState.district,
-                        onValueChange = onDistrictChange,
-                        options = listOf("Lima", "Miraflores", "San Isidro", "Surco", "La Molina"),
-                        placeholder = "Select",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "City",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF4682B4),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    
-                    DistrictCityDropdown(
-                        value = uiState.city,
-                        onValueChange = onCityChange,
-                        options = listOf("Lima", "Callao", "Arequipa", "Cusco", "Trujillo"),
-                        placeholder = "Select",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-            
-            // Workshop Address
-            Text(
-                text = "Workshop address",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF4682B4)
-            )
-            
-            OutlinedTextField(
-                value = uiState.address,
-                onValueChange = onAddressChange,
-                placeholder = {
-                    Text(
-                        text = "Street name and number (e.g. Av Real 123)",
-                        color = Color(0xFF9CA3AF),
-                        fontSize = 14.sp
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF4682B4),
-                    unfocusedBorderColor = Color(0xFFD1D5DB),
-                    focusedTextColor = Color(0xFF1A202C),
-                    unfocusedTextColor = Color(0xFF1A202C)
-                ),
-                singleLine = true,
-                textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next
-                )
-            )
-            
-            // Logo and Workshop Image Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                DashedImageBox(
-                    label = "Logo",
-                    imageUri = uiState.logoUri,
-                    onClick = onLogoClick,
-                    modifier = Modifier.weight(1f)
-                )
-                
-                DashedImageBox(
-                    label = "Workshop image",
-                    imageUri = uiState.workshopImageUri,
-                    onClick = onWorkshopImageClick,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            
-            // Services Available
-            ServiceChipField(
-                services = uiState.services,
-                onRemoveService = onRemoveService,
-                onAddClick = onAddService,
-                modifier = Modifier.fillMaxWidth()
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Next Button
+            // Save Button
             Button(
-                onClick = onNextClick,
+                onClick = onSaveClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -270,14 +264,22 @@ private fun WorkshopRegistrationStep1Content(
                     containerColor = Color(0xFF4682B4),
                     disabledContainerColor = Color(0xFFCCCCCC)
                 ),
-                enabled = uiState.isStep1Valid
+                enabled = isValid && !isLoading
             ) {
-                Text(
-                    text = "Next",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Guardar",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(24.dp))

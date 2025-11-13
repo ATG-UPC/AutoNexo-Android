@@ -73,6 +73,7 @@ object NetworkModule {
     fun provideGson(): Gson {
         return GsonBuilder()
             .setLenient() // Permite JSON malformado
+            .serializeNulls() // Incluye campos null en la serialización JSON
             .create()
     }
     

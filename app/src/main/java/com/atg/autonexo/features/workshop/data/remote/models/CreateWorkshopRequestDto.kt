@@ -5,33 +5,28 @@ import com.google.gson.annotations.SerializedName
 /**
  * Request DTO para crear un taller
  * Endpoint: POST /api/v1/workshops
+ * 
+ * Campos según el backend:
+ * - ownerUserId: Long (requerido)
+ * - name: String (requerido, 3-200 caracteres)
+ * - shortDescription: String? (opcional, max 500 caracteres)
+ * - legalName: String? (opcional, max 300 caracteres)
+ * - ruc: String? (opcional, exactamente 11 dígitos)
  */
 data class CreateWorkshopRequestDto(
+    @SerializedName("ownerUserId")
+    val ownerUserId: Long,
+    
     @SerializedName("name")
     val name: String,
     
-    @SerializedName("description")
-    val description: String,
+    @SerializedName("shortDescription")
+    val shortDescription: String?,
     
-    @SerializedName("contactEmail")
-    val contactEmail: String,
+    @SerializedName("legalName")
+    val legalName: String?,
     
-    @SerializedName("contactPhone")
-    val contactPhone: String,
-    
-    @SerializedName("address")
-    val address: String,
-    
-    @SerializedName("district")
-    val district: String,
-    
-    @SerializedName("city")
-    val city: String,
-    
-    @SerializedName("latitude")
-    val latitude: Double,
-    
-    @SerializedName("longitude")
-    val longitude: Double
+    @SerializedName("ruc")
+    val ruc: String?
 )
 

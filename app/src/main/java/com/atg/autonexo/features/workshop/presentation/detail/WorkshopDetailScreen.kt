@@ -151,6 +151,8 @@ private fun WorkshopDetailContent(
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFFE0E0E0))
             ) {
+                // TODO: Cargar desde workshop.imageUrl cuando se implemente carga de URLs
+                // Por ahora muestra la imagen por defecto
                 Image(
                     painter = painterResource(R.drawable.workshop),
                     contentDescription = "Workshop image",
@@ -214,6 +216,8 @@ private fun WorkshopDetailContent(
                         .background(Color(0xFFE0E0E0)),
                     contentAlignment = Alignment.Center
                 ) {
+                    // TODO: Cargar desde workshop.logoUrl cuando se implemente carga de URLs
+                    // Por ahora muestra el logo por defecto
                     Image(
                         painter = painterResource(R.drawable.logoworkshop),
                         contentDescription = "Workshop logo",
@@ -224,14 +228,30 @@ private fun WorkshopDetailContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dirección
-            Text(
-                text = workshop.address,
-                fontSize = 14.sp,
-                color = Color(0xFF4A5568)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // Razón Social
+            if (!workshop.legalName.isNullOrBlank()) {
+                Text(
+                    text = workshop.legalName,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF1A202C)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            
+            // RUC
+            if (!workshop.ruc.isNullOrBlank()) {
+                Text(
+                    text = "RUC: ${workshop.ruc}",
+                    fontSize = 13.sp,
+                    color = Color(0xFF718096)
+                )
+            }
+            
+            // Espaciado después de legalName/RUC
+            if (!workshop.legalName.isNullOrBlank() || !workshop.ruc.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Descripción
             Text(

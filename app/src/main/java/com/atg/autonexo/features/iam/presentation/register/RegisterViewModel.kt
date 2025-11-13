@@ -2,6 +2,7 @@ package com.atg.autonexo.features.iam.presentation.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atg.autonexo.core.data.UserPreferences
 import com.atg.autonexo.features.iam.domain.models.AuthResult
 import com.atg.autonexo.features.iam.domain.repositories.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,7 +43,8 @@ sealed class RegisterEvent {
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(RegisterUiState())
@@ -183,6 +185,11 @@ class RegisterViewModel @Inject constructor(
             
             when (result) {
                 is AuthResult.Success -> {
+                    // Guardar el rol si es WORKSHOP_MANAGER
+                    if (_uiState.value.selectedRole == "WORKSHOP_MANAGER") {
+                        userPreferences.setIsWorkshopManager(true)
+                    }
+                    
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     _events.emit(RegisterEvent.RegisterSuccess(result.data))
                 }

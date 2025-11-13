@@ -17,8 +17,12 @@ import com.atg.autonexo.features.iam.presentation.resetpassword.ResetPasswordScr
 import com.atg.autonexo.features.workshop.presentation.register.WorkshopRegistrationStep1Screen
 import com.atg.autonexo.features.workshop.presentation.register.WorkshopRegistrationStep2Screen
 import com.atg.autonexo.features.workshop.presentation.register.WorkshopCodeJoinScreen
+import com.atg.autonexo.features.workshop.presentation.register.WorkshopTagsSelectionScreen
+import com.atg.autonexo.features.workshop.presentation.register.WorkshopMediaUploadScreen
+import com.atg.autonexo.features.workshop.presentation.register.WorkshopLocationsScreen
 import com.atg.autonexo.features.workshop.presentation.detail.WorkshopDetailScreen
 import com.atg.autonexo.features.workshop.presentation.detail.WorkshopDetailViewModel
+import com.atg.autonexo.features.workshop.presentation.edit.WorkshopEditScreen
 import com.atg.autonexo.features.matchingbooking.presentation.dashboard.DashboardScreen
 import com.atg.autonexo.features.iam.presentation.profile.EditProfileScreen
 import com.atg.autonexo.features.iam.presentation.profile.NewPasswordScreen
@@ -37,6 +41,7 @@ import com.atg.autonexo.features.matchingbooking.presentation.offer.OfferListScr
 import androidx.compose.runtime.LaunchedEffect
 import com.atg.autonexo.core.data.UserPreferences
 import androidx.compose.runtime.remember
+import dagger.hilt.android.EntryPointAccessors
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePro
 import com.atg.autonexo.features.subscription.presentation.plans.SubscribePremiun
 
@@ -51,6 +56,11 @@ fun AppNavigation(
     ) {
         // Rutas de autenticación
         composable(Route.Auth.Login.route) {
+            val userPrefs = remember { EntryPointAccessors.fromApplication(
+                navController.context.applicationContext,
+                UserPrefsEntryPoint::class.java
+            ).userPreferences() }
+            
             LoginScreen(
                 onNavigateToRegister = {
                     navController.navigate(Route.Auth.Register.route) {
@@ -67,7 +77,17 @@ fun AppNavigation(
                     }
                 },
                 onLoginSuccess = {
-                    navController.navigate(Route.Home.route) {
+                    // Verificar si es workshop manager sin workshop
+                    val isManager = userPrefs.isWorkshopManager()
+                    val hasWorkshop = userPrefs.hasWorkshop()
+                    
+                    val targetRoute = if (isManager && !hasWorkshop) {
+                        Route.Auth.WorkshopRegistrationStep1.route
+                    } else {
+                        Route.Home.route
+                    }
+                    
+                    navController.navigate(targetRoute) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
@@ -93,8 +113,51 @@ fun AppNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                onNavigateToStep2 = {
-                    navController.navigate(Route.Auth.WorkshopRegistrationStep2.route)
+                onNext = {
+                    navController.navigate(Route.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
+        composable(Route.Auth.WorkshopRegistrationTags.route) {
+            WorkshopTagsSelectionScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNext = {
+                    navController.navigate(Route.Auth.WorkshopRegistrationMedia.route)
+                }
+            )
+        }
+        
+        composable(Route.Auth.WorkshopRegistrationMedia.route) {
+            WorkshopMediaUploadScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNext = {
+                    navController.navigate(Route.Auth.WorkshopRegistrationLocations.route)
+                },
+                onSelectLogo = {
+                    // TODO: Implementar selección de logo
+                },
+                onSelectPhotos = {
+                    // TODO: Implementar selección de fotos
+                }
+            )
+        }
+        
+        composable(Route.Auth.WorkshopRegistrationLocations.route) {
+            WorkshopLocationsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onComplete = {
+                    navController.navigate(Route.WorkshopDetailOwner.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -141,17 +204,7 @@ fun AppNavigation(
         
         // Workshop edit step 1
         composable(Route.Auth.WorkshopEditStep1.route) {
-            WorkshopRegistrationStep1Screen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToStep2 = {
-                    navController.navigate(Route.Auth.WorkshopEditStep2.route)
-                }
-            )
-        }
-        
-        // Workshop edit step 2
-        composable(Route.Auth.WorkshopEditStep2.route) {
-            WorkshopRegistrationStep2Screen(
+            WorkshopEditScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onSuccess = {
                     navController.navigate(Route.WorkshopDetailOwner.route) {

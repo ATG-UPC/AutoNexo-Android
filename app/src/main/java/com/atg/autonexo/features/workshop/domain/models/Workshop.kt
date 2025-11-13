@@ -4,6 +4,8 @@ data class Workshop(
     val id: Long,
     val name: String,
     val description: String,
+    val legalName: String?,
+    val ruc: String?,
     val contactEmail: String,
     val contactPhone: String,
     val logoUrl: String?,

@@ -1,5 +1,6 @@
 ﻿package com.atg.autonexo.features.workshop.presentation.detail
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +12,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.atg.autonexo.features.workshop.presentation.models.MechanicUi
 import com.atg.autonexo.features.workshop.presentation.models.WorkshopUi
+import com.atg.autonexo.features.workshop.domain.repositories.WorkshopRepository
+import com.atg.autonexo.features.iam.domain.repositories.AuthRepository
+import com.atg.autonexo.features.iam.domain.models.AuthResult
 
 data class WorkshopDetailUiState(
     val workshop: WorkshopUi? = null,
@@ -21,24 +25,100 @@ data class WorkshopDetailUiState(
 
 @HiltViewModel
 class WorkshopDetailViewModel @Inject constructor(
-    // TODO: Inyectar repositorios cuando estén listos
+    private val workshopRepository: WorkshopRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkshopDetailUiState())
     val uiState: StateFlow<WorkshopDetailUiState> = _uiState.asStateFlow()
 
     init {
-        // TODO: Cargar datos del workshop desde el repositorio
-        // Por ahora, datos de ejemplo - Por defecto como owner
-        loadMockData(isOwner = true)
+        loadRealWorkshopData()
+    }
+    
+    private fun loadRealWorkshopData() {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                
+                // Obtener workshop del backend
+                val workshopResult = workshopRepository.getMyWorkshop()
+                
+                if (workshopResult !is AuthResult.Success) {
+                    val errorMsg = if (workshopResult is AuthResult.Error) {
+                        workshopResult.message
+                    } else {
+                        "No se pudo cargar el workshop"
+                    }
+                    Log.e("WorkshopDetailVM", "Error al cargar workshop: $errorMsg")
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = errorMsg
+                        )
+                    }
+                    return@launch
+                }
+                
+                val workshop = workshopResult.data
+                
+                // Obtener usuario actual (owner)
+                val currentUser = authRepository.getCurrentUser()
+                
+                // Mapear Workshop domain a WorkshopUi
+                val workshopUi = WorkshopUi(
+                    id = workshop.id.toString(),
+                    name = workshop.name,
+                    imageUrl = workshop.photoUrls.firstOrNull(), // Primera foto como imagen principal
+                    logoUrl = workshop.logoUrl,
+                    rating = 4.0f, // Hardcodeado
+                    legalName = workshop.legalName,
+                    ruc = workshop.ruc,
+                    address = "Av Arequipa 1234", // Hardcodeado
+                    district = "Surco", // Hardcodeado
+                    city = "Lima", // Hardcodeado
+                    description = workshop.description.takeIf { it.isNotBlank() } ?: "",
+                    services = workshop.capabilityTags, // Tags como servicios
+                    mechanics = if (currentUser != null) {
+                        listOf(
+                            MechanicUi(
+                                id = currentUser.id.toString(),
+                                name = currentUser.fullName,
+                                role = "Workshop owner"
+                            )
+                        )
+                    } else {
+                        emptyList()
+                    },
+                    isOwner = true,
+                    workshopCode = null // TODO: Obtener código del workshop si existe
+                )
+                
+                _uiState.update { 
+                    it.copy(
+                        workshop = workshopUi,
+                        isLoading = false
+                    )
+                }
+                
+            } catch (e: Exception) {
+                Log.e("WorkshopDetailVM", "Exception loading workshop", e)
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = e.message ?: "Error desconocido"
+                    )
+                }
+            }
+        }
     }
     
     fun loadWorkshopAsOwner() {
-        loadMockData(isOwner = true)
+        loadRealWorkshopData()
     }
     
     fun loadWorkshopAsMember() {
-        loadMockData(isOwner = false)
+        loadRealWorkshopData()
     }
 
     private fun loadMockData(isOwner: Boolean = true) {
@@ -52,7 +132,10 @@ class WorkshopDetailViewModel @Inject constructor(
                 id = "1",
                 name = "Adonz Automotive",
                 imageUrl = null,
+                logoUrl = null,
                 rating = 4.0f,
+                legalName = null,
+                ruc = null,
                 address = "Av Arequipa 1234",
                 district = "Surco",
                 city = "Lima",

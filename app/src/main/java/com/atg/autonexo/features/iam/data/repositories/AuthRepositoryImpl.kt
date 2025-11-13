@@ -466,12 +466,18 @@ class AuthRepositoryImpl @Inject constructor(
     // ========== Helper Methods ==========
     
     private fun updateUserPreferencesFromRoles(user: User) {
-        user.workshopId?.let {
+        // Actualizar estado de workshop
+        if (user.workshopId != null) {
             userPreferences.setHasWorkshop(true)
+        } else {
+            userPreferences.setHasWorkshop(false)
         }
         
+        // Actualizar rol de workshop manager
         if (user.isWorkshopManager()) {
             userPreferences.setIsWorkshopManager(true)
+        } else {
+            userPreferences.setIsWorkshopManager(false)
         }
     }
     

@@ -12,15 +12,11 @@ interface WorkshopRepository {
     // ========== Workshop Management ==========
     
     suspend fun createWorkshop(
+        ownerUserId: Long,
         name: String,
-        description: String,
-        contactEmail: String,
-        contactPhone: String,
-        address: String,
-        district: String,
-        city: String,
-        latitude: Double,
-        longitude: Double
+        shortDescription: String?,
+        legalName: String?,
+        ruc: String?
     ): AuthResult<Workshop>
     
     suspend fun getMyWorkshop(): AuthResult<Workshop>
@@ -29,6 +25,7 @@ interface WorkshopRepository {
     
     suspend fun updateWorkshop(
         name: String?,
+        shortDescription: String?,
         description: String?,
         contactEmail: String?,
         contactPhone: String?
@@ -37,12 +34,13 @@ interface WorkshopRepository {
     // ========== Location Management ==========
     
     suspend fun addLocation(
-        address: String,
-        district: String,
+        street: String,
         city: String,
-        latitude: Double,
-        longitude: Double,
-        isPrimary: Boolean
+        state: String,
+        zip: String,
+        country: String,
+        latitude: Double?,
+        longitude: Double?
     ): AuthResult<Location>
     
     suspend fun getMyWorkshopLocations(): AuthResult<List<Location>>

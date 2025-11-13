@@ -13,6 +13,15 @@ data class WorkshopDto(
     @SerializedName("name")
     val name: String?,
     
+    @SerializedName("shortDescription")
+    val shortDescription: String?,
+    
+    @SerializedName("legalName")
+    val legalName: String?,
+    
+    @SerializedName("ruc")
+    val ruc: String?,
+    
     @SerializedName("description")
     val description: String?,
     

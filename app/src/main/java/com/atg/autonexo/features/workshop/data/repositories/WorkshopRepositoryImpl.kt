@@ -25,28 +25,20 @@ class WorkshopRepositoryImpl @Inject constructor(
     // ========== Workshop Management ==========
     
     override suspend fun createWorkshop(
+        ownerUserId: Long,
         name: String,
-        description: String,
-        contactEmail: String,
-        contactPhone: String,
-        address: String,
-        district: String,
-        city: String,
-        latitude: Double,
-        longitude: Double
+        shortDescription: String?,
+        legalName: String?,
+        ruc: String?
     ): AuthResult<Workshop> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "Creating workshop: $name")
+            Log.d(TAG, "Creating workshop: $name for owner: $ownerUserId")
             val request = CreateWorkshopRequestDto(
+                ownerUserId = ownerUserId,
                 name = name,
-                description = description,
-                contactEmail = contactEmail,
-                contactPhone = contactPhone,
-                address = address,
-                district = district,
-                city = city,
-                latitude = latitude,
-                longitude = longitude
+                shortDescription = shortDescription?.takeIf { it.isNotBlank() },
+                legalName = legalName?.takeIf { it.isNotBlank() },
+                ruc = ruc?.takeIf { it.isNotBlank() }
             )
             
             val response = workshopService.createWorkshop(request)
@@ -140,6 +132,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     
     override suspend fun updateWorkshop(
         name: String?,
+        shortDescription: String?,
         description: String?,
         contactEmail: String?,
         contactPhone: String?
@@ -148,6 +141,7 @@ class WorkshopRepositoryImpl @Inject constructor(
             Log.d(TAG, "Updating workshop")
             val request = UpdateWorkshopRequestDto(
                 name = name,
+                shortDescription = shortDescription,
                 description = description,
                 contactEmail = contactEmail,
                 contactPhone = contactPhone
@@ -184,22 +178,24 @@ class WorkshopRepositoryImpl @Inject constructor(
     // ========== Location Management ==========
     
     override suspend fun addLocation(
-        address: String,
-        district: String,
+        street: String,
         city: String,
-        latitude: Double,
-        longitude: Double,
-        isPrimary: Boolean
+        state: String,
+        zip: String,
+        country: String,
+        latitude: Double?,
+        longitude: Double?
     ): AuthResult<Location> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "Adding location")
+            Log.d(TAG, "Adding location: $street, $city, $state")
             val request = CreateLocationRequestDto(
-                address = address,
-                district = district,
+                street = street,
                 city = city,
+                state = state,
+                zip = zip,
+                country = country,
                 latitude = latitude,
-                longitude = longitude,
-                isPrimary = isPrimary
+                longitude = longitude
             )
             
             val response = workshopService.addLocation(request)
@@ -621,7 +617,9 @@ class WorkshopRepositoryImpl @Inject constructor(
         return Workshop(
             id = id ?: 0,
             name = name ?: "",
-            description = description ?: "",
+            description = shortDescription ?: description ?: "",
+            legalName = legalName,
+            ruc = ruc,
             contactEmail = contactEmail ?: "",
             contactPhone = contactPhone ?: "",
             logoUrl = logoUrl,
@@ -641,12 +639,14 @@ class WorkshopRepositoryImpl @Inject constructor(
     private fun LocationDto.toDomainModel(): Location {
         return Location(
             id = id ?: 0,
-            address = address ?: "",
-            district = district ?: "",
+            street = street ?: "",
             city = city ?: "",
-            latitude = latitude ?: 0.0,
-            longitude = longitude ?: 0.0,
-            isPrimary = isPrimary ?: false
+            state = state ?: "",
+            zip = zip ?: "",
+            country = country ?: "",
+            latitude = latitude,
+            longitude = longitude,
+            active = active ?: true
         )
     }
     
