@@ -1,687 +1,671 @@
-﻿package com.atg.autonexo.features.workshop.data.repositories
+package com.atg.autonexo.features.workshop.data.repositories
 
-import android.util.Log
-import com.atg.autonexo.features.iam.domain.models.AuthResult
-import com.atg.autonexo.features.workshop.data.remote.models.*
-import com.atg.autonexo.features.workshop.data.remote.services.WorkshopService
-import com.atg.autonexo.features.workshop.domain.models.*
+import android.content.Context
+import android.net.Uri
+import com.atg.autonexo.features.auth.data.remote.models.ErrorResponseDto
+import com.atg.autonexo.features.workshop.data.mappers.toDomain
+import com.atg.autonexo.features.workshop.data.remote.models.AcceptInvitationRequestDto
+import com.atg.autonexo.features.workshop.data.remote.models.AddLocationRequestDto
+import com.atg.autonexo.features.workshop.data.remote.models.CreateInvitationRequestDto
+import com.atg.autonexo.features.workshop.data.remote.models.CreateWorkshopRequestDto
+import com.atg.autonexo.features.workshop.data.remote.services.WorkshopApiService
+import com.atg.autonexo.features.workshop.domain.models.AcceptInvitationRequest
+import com.atg.autonexo.features.workshop.domain.models.CreateInvitationRequest
+import com.atg.autonexo.features.workshop.domain.models.CreateWorkshopRequest
+import com.atg.autonexo.features.workshop.domain.models.Invitation
+import com.atg.autonexo.features.workshop.domain.models.Location
+import com.atg.autonexo.features.workshop.domain.models.Workshop
+import com.atg.autonexo.features.workshop.domain.models.WorkshopEmployee
 import com.atg.autonexo.features.workshop.domain.repositories.WorkshopRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.HttpException
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import javax.inject.Inject
 
 class WorkshopRepositoryImpl @Inject constructor(
-    private val workshopService: WorkshopService
+    private val apiService: WorkshopApiService,
+    private val gson: Gson,
+    private val context: Context
 ) : WorkshopRepository {
-    
-    companion object {
-        private const val TAG = "WorkshopRepository"
-    }
-    
-    // ========== Workshop Management ==========
-    
-    override suspend fun createWorkshop(
-        ownerUserId: Long,
-        name: String,
-        shortDescription: String?,
-        legalName: String?,
-        ruc: String?
-    ): AuthResult<Workshop> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Creating workshop: $name for owner: $ownerUserId")
-            val request = CreateWorkshopRequestDto(
-                ownerUserId = ownerUserId,
-                name = name,
-                shortDescription = shortDescription?.takeIf { it.isNotBlank() },
-                legalName = legalName?.takeIf { it.isNotBlank() },
-                ruc = ruc?.takeIf { it.isNotBlank() }
+
+    override suspend fun createWorkshop(request: CreateWorkshopRequest): Result<Workshop> {
+        return try {
+            val dto = CreateWorkshopRequestDto(
+                ownerUserId = request.ownerUserId,
+                name = request.name,
+                shortDescription = request.shortDescription,
+                legalName = request.legalName,
+                ruc = request.ruc
             )
             
-            val response = workshopService.createWorkshop(request)
+            val response = apiService.createWorkshop(dto)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val workshop = response.body()!!.toDomain()
+                Result.success(workshop)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al crear workshop")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al crear workshop")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getWorkshopById(workshopId: Long): Result<Workshop> {
+        return try {
+            val response = apiService.getWorkshopById(workshopId)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val workshop = response.body()!!.toDomain()
+                Result.success(workshop)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al obtener workshop")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener workshop")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getMyWorkshop(): Result<Workshop> {
+        return try {
+            val response = apiService.getMyWorkshop()
+            
+            if (response.isSuccessful && response.body() != null) {
+                val workshop = response.body()!!.toDomain()
+                Result.success(workshop)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al obtener tu workshop")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener tu workshop")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateWorkshop(workshop: Workshop): Result<Workshop> {
+        return try {
+            val dto = com.atg.autonexo.features.workshop.data.remote.models.UpdateWorkshopRequestDto(
+                name = workshop.name,
+                shortDescription = workshop.shortDescription,
+                legalName = workshop.legalName,
+                ruc = workshop.ruc
+            )
+            
+            val response = apiService.updateWorkshop(dto)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val updatedWorkshop = response.body()!!.toDomain()
+                Result.success(updatedWorkshop)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al actualizar workshop")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al actualizar workshop")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateTags(workshopId: Long, tags: List<String>): Result<Workshop> {
+        return try {
+            val response = apiService.updateTags(tags)
+            
+            android.util.Log.d("WorkshopRepository", "updateTags - Código HTTP: ${response.code()}")
+            android.util.Log.d("WorkshopRepository", "updateTags - Es exitoso: ${response.isSuccessful}")
             
             if (response.isSuccessful) {
                 val workshopDto = response.body()
                 if (workshopDto != null) {
-                    val workshop = workshopDto.toDomainModel()
-                    return@withContext AuthResult.Success(workshop)
+                    android.util.Log.d("WorkshopRepository", "updateTags - Workshop recibido: id=${workshopDto.id}")
+                    val workshop = workshopDto.toDomain()
+                    Result.success(workshop)
                 } else {
-                    return@withContext AuthResult.Error("Empty response from server")
+                    // El backend puede devolver un string exitoso en lugar de un objeto
+                    // En ese caso, obtenemos el workshop actualizado desde el backend
+                    android.util.Log.w("WorkshopRepository", "updateTags - Body es null, obteniendo workshop actualizado")
+                    // Intentar obtener el workshop actualizado
+                    getMyWorkshop()
                 }
             } else {
-                val errorMessage = when (response.code()) {
+                // Leer el errorBody para obtener más información
+                val errorBodyString = try {
+                    response.errorBody()?.string() ?: ""
+                } catch (ex: Exception) {
+                    ""
+                }
+                
+                android.util.Log.e("WorkshopRepository", "updateTags - Error HTTP ${response.code()}: $errorBodyString")
+                Result.failure(Exception(parseError(response, "Error al actualizar tags")))
+            }
+        } catch (e: com.google.gson.JsonSyntaxException) {
+            // Error específico de parsing JSON - el backend devolvió un string en lugar de objeto
+            android.util.Log.e("WorkshopRepository", "updateTags - Error de parsing JSON: ${e.message}")
+            
+            // Si el error es porque esperaba objeto pero recibió string, 
+            // probablemente el backend devolvió un mensaje de éxito como string
+            // Intentamos obtener el workshop actualizado
+            try {
+                android.util.Log.d("WorkshopRepository", "updateTags - Intentando obtener workshop actualizado después de error JSON")
+                getMyWorkshop()
+            } catch (ex: Exception) {
+                Result.failure(Exception("Error al actualizar tags. El formato de respuesta no es el esperado. ${e.message}"))
+            }
+        } catch (e: HttpException) {
+            android.util.Log.e("WorkshopRepository", "updateTags - HttpException: ${e.message}")
+            Result.failure(Exception(parseHttpException(e, "Error al actualizar tags")))
+        } catch (e: IOException) {
+            android.util.Log.e("WorkshopRepository", "updateTags - IOException: ${e.message}")
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            android.util.Log.e("WorkshopRepository", "updateTags - Exception: ${e.message}")
+            android.util.Log.e("WorkshopRepository", "updateTags - Stack trace: ${e.stackTraceToString()}")
+            Result.failure(Exception("Error inesperado al actualizar tags: ${e.message}"))
+        }
+    }
+
+    override suspend fun addTags(workshopId: Long, tags: List<String>): Result<Workshop> {
+        return try {
+            val response = apiService.addTags(tags)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val workshop = response.body()!!.toDomain()
+                Result.success(workshop)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al agregar tags")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al agregar tags")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun uploadLogo(workshopId: Long, imageUri: Uri): Result<String> {
+        return try {
+            val file = uriToFile(imageUri) ?: return Result.failure(Exception("No se pudo procesar la imagen"))
+            
+            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+            
+            val response = apiService.uploadLogo(body)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val url = response.body()!!.url
+                Result.success(url)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al subir logo")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al subir logo")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun uploadPhoto(workshopId: Long, imageUri: Uri): Result<String> {
+        return try {
+            val file = uriToFile(imageUri) ?: return Result.failure(Exception("No se pudo procesar la imagen"))
+            
+            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+            
+            val response = apiService.uploadPhoto(body)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val url = response.body()!!.url
+                Result.success(url)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al subir foto")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al subir foto")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deletePhoto(workshopId: Long, photoIndex: Int): Result<Unit> {
+        return try {
+            val response = apiService.deletePhoto(photoIndex)
+            
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al eliminar foto")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al eliminar foto")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun addLocation(workshopId: Long, location: Location): Result<Location> {
+        return try {
+            val dto = AddLocationRequestDto(
+                street = location.street,
+                city = location.city,
+                state = location.state,
+                zip = location.zip,
+                country = location.country,
+                latitude = location.latitude,
+                longitude = location.longitude
+            )
+            
+            val response = apiService.addLocation(dto)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val createdLocation = response.body()!!.toDomain()
+                Result.success(createdLocation)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al agregar ubicación")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al agregar ubicación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getWorkshopLocations(workshopId: Long): Result<List<Location>> {
+        return try {
+            val response = apiService.getWorkshopLocations()
+            
+            if (response.isSuccessful && response.body() != null) {
+                val locations = response.body()!!.map { it.toDomain() }
+                Result.success(locations)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al obtener ubicaciones")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener ubicaciones")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getLocationById(workshopId: Long, locationId: Long): Result<Location> {
+        return try {
+            val response = apiService.getLocationById(locationId)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val location = response.body()!!.toDomain()
+                Result.success(location)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al obtener ubicación")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener ubicación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateLocation(workshopId: Long, locationId: Long, location: Location): Result<Location> {
+        return try {
+            val dto = com.atg.autonexo.features.workshop.data.remote.models.UpdateLocationRequestDto(
+                street = location.street,
+                city = location.city,
+                state = location.state,
+                zip = location.zip,
+                country = location.country,
+                latitude = location.latitude,
+                longitude = location.longitude
+            )
+            
+            val response = apiService.updateLocation(locationId, dto)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val updatedLocation = response.body()!!.toDomain()
+                Result.success(updatedLocation)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al actualizar ubicación")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al actualizar ubicación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteLocation(workshopId: Long, locationId: Long): Result<Unit> {
+        return try {
+            val response = apiService.deleteLocation(locationId)
+            
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al eliminar ubicación")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al eliminar ubicación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun uriToFile(uri: Uri): File? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return null
+            val file = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
+            val outputStream = FileOutputStream(file)
+            
+            inputStream.use { input ->
+                outputStream.use { output ->
+                    input.copyTo(output)
+                }
+            }
+            
+            file
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun parseError(response: retrofit2.Response<*>, defaultMessage: String): String {
+        val errorBodyString = try {
+            response.errorBody()?.string() ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+        
+        return when {
+            errorBodyString.isNotBlank() -> {
+                try {
+                    val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
+                    val backendMessage = errorResponse.message ?: errorResponse.error
+                    
+                    when (response.code()) {
+                        400 -> backendMessage ?: "Datos inválidos"
+                        401 -> "No autorizado"
+                        403 -> "Acceso denegado"
+                        404 -> "No encontrado"
+                        409 -> backendMessage ?: "Conflicto"
+                        422 -> backendMessage ?: "Datos de validación incorrectos"
+                        500 -> backendMessage ?: "Error interno del servidor"
+                        503 -> "Servicio no disponible"
+                        else -> backendMessage ?: defaultMessage
+                    }
+                } catch (e: Exception) {
+                    when (response.code()) {
+                        400 -> "Datos inválidos"
+                        401 -> "No autorizado"
+                        403 -> "Acceso denegado"
+                        404 -> "No encontrado"
+                        500 -> "Error interno del servidor"
+                        else -> defaultMessage
+                    }
+                }
+            }
+            else -> {
+                when (response.code()) {
                     400 -> "Datos inválidos"
-                    409 -> "Ya tienes un taller registrado"
-                    else -> "Error al crear taller"
+                    401 -> "No autorizado"
+                    403 -> "Acceso denegado"
+                    404 -> "No encontrado"
+                    500 -> "Error interno del servidor"
+                    else -> defaultMessage
                 }
-                Log.e(TAG, "Create workshop failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Create workshop exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
         }
     }
-    
-    override suspend fun getMyWorkshop(): AuthResult<Workshop> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Getting my workshop")
-            val response = workshopService.getMyWorkshop()
-            
-            if (response.isSuccessful) {
-                val workshopDto = response.body()
-                if (workshopDto != null) {
-                    val workshop = workshopDto.toDomainModel()
-                    return@withContext AuthResult.Success(workshop)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
-                }
-            } else {
-                val errorMessage = when (response.code()) {
-                    404 -> "No tienes un taller registrado"
-                    401 -> "Sesión expirada"
-                    else -> "Error al obtener taller"
-                }
-                Log.e(TAG, "Get my workshop failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Get my workshop exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
+
+    private fun parseHttpException(e: HttpException, defaultMessage: String): String {
+        val errorBodyString = try {
+            e.response()?.errorBody()?.string() ?: ""
+        } catch (ex: Exception) {
+            ""
         }
-    }
-    
-    override suspend fun getWorkshopById(workshopId: Long): AuthResult<Workshop> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Getting workshop by id: $workshopId")
-            val response = workshopService.getWorkshopById(workshopId)
-            
-            if (response.isSuccessful) {
-                val workshopDto = response.body()
-                if (workshopDto != null) {
-                    val workshop = workshopDto.toDomainModel()
-                    return@withContext AuthResult.Success(workshop)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
+        
+        return when {
+            errorBodyString.isNotBlank() -> {
+                try {
+                    val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
+                    val backendMessage = errorResponse.message ?: errorResponse.error
+                    
+                    when (e.code()) {
+                        400 -> backendMessage ?: "Datos inválidos"
+                        401 -> "No autorizado"
+                        403 -> "Acceso denegado"
+                        404 -> "No encontrado"
+                        500 -> backendMessage ?: "Error interno del servidor"
+                        else -> backendMessage ?: defaultMessage
+                    }
+                } catch (ex: Exception) {
+                    when (e.code()) {
+                        400 -> "Datos inválidos"
+                        401 -> "No autorizado"
+                        403 -> "Acceso denegado"
+                        404 -> "No encontrado"
+                        500 -> "Error interno del servidor"
+                        else -> defaultMessage
+                    }
                 }
-            } else {
-                val errorMessage = when (response.code()) {
-                    404 -> "Taller no encontrado"
-                    else -> "Error al obtener taller"
-                }
-                Log.e(TAG, "Get workshop by id failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Get workshop by id exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun updateWorkshop(
-        name: String?,
-        shortDescription: String?,
-        description: String?,
-        contactEmail: String?,
-        contactPhone: String?
-    ): AuthResult<Workshop> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Updating workshop")
-            val request = UpdateWorkshopRequestDto(
-                name = name,
-                shortDescription = shortDescription,
-                description = description,
-                contactEmail = contactEmail,
-                contactPhone = contactPhone
-            )
-            
-            val response = workshopService.updateWorkshop(request)
-            
-            if (response.isSuccessful) {
-                val workshopDto = response.body()
-                if (workshopDto != null) {
-                    val workshop = workshopDto.toDomainModel()
-                    return@withContext AuthResult.Success(workshop)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
-                }
-            } else {
-                val errorMessage = when (response.code()) {
+            else -> {
+                when (e.code()) {
                     400 -> "Datos inválidos"
-                    404 -> "Taller no encontrado"
-                    else -> "Error al actualizar taller"
+                    401 -> "No autorizado"
+                    403 -> "Acceso denegado"
+                    404 -> "No encontrado"
+                    500 -> "Error interno del servidor"
+                    else -> defaultMessage
                 }
-                Log.e(TAG, "Update workshop failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Update workshop exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
         }
     }
-    
-    // ========== Location Management ==========
-    
-    override suspend fun addLocation(
-        street: String,
-        city: String,
-        state: String,
-        zip: String,
-        country: String,
-        latitude: Double?,
-        longitude: Double?
-    ): AuthResult<Location> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Adding location: $street, $city, $state")
-            val request = CreateLocationRequestDto(
-                street = street,
-                city = city,
-                state = state,
-                zip = zip,
-                country = country,
-                latitude = latitude,
-                longitude = longitude
+
+    // ========== INVITACIONES ==========
+
+    override suspend fun createInvitation(request: CreateInvitationRequest): Result<Invitation> {
+        return try {
+            val dto = CreateInvitationRequestDto(
+                email = request.email,
+                message = request.message,
+                validityDays = request.validityDays
             )
             
-            val response = workshopService.addLocation(request)
+            val response = apiService.createInvitation(dto)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val invitationDto = response.body()!!
+                val invitation = invitationDto.toDomain()
+                Result.success(invitation)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al crear invitación")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al crear invitación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getInvitations(): Result<List<Invitation>> {
+        return try {
+            val response = apiService.getInvitations()
             
             if (response.isSuccessful) {
-                val locationDto = response.body()
-                if (locationDto != null) {
-                    val location = locationDto.toDomainModel()
-                    return@withContext AuthResult.Success(location)
+                // Si el body es null, devolver lista vacía en lugar de error
+                val invitationsDto = response.body() ?: emptyList()
+                val invitations = invitationsDto.toDomain()
+                Result.success(invitations)
+            } else {
+                // Si es 404, puede que simplemente no haya invitaciones aún, devolver lista vacía
+                if (response.code() == 404) {
+                    Result.success(emptyList())
                 } else {
-                    return@withContext AuthResult.Error("Empty response from server")
+                    Result.failure(Exception(parseError(response, "Error al obtener invitaciones")))
                 }
-            } else {
-                val errorMessage = when (response.code()) {
-                    400 -> "Datos inválidos"
-                    else -> "Error al agregar ubicación"
-                }
-                Log.e(TAG, "Add location failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
             }
+        } catch (e: HttpException) {
+            // Si es 404, devolver lista vacía
+            if (e.code() == 404) {
+                Result.success(emptyList())
+            } else {
+                Result.failure(Exception(parseHttpException(e, "Error al obtener invitaciones")))
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
-            Log.e(TAG, "Add location exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
+            android.util.Log.e("WorkshopRepository", "getInvitations - Error: ${e.message}")
+            android.util.Log.e("WorkshopRepository", "getInvitations - Stack trace: ${e.stackTraceToString()}")
+            Result.failure(Exception("Error inesperado al obtener invitaciones: ${e.message}"))
         }
     }
-    
-    override suspend fun getMyWorkshopLocations(): AuthResult<List<Location>> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Getting workshop locations")
-            val response = workshopService.getMyWorkshopLocations()
+
+    override suspend fun getInvitationByCode(code: String): Result<Invitation> {
+        return try {
+            val response = apiService.getInvitationByCode(code)
             
-            if (response.isSuccessful) {
-                val locationDtos = response.body() ?: emptyList()
-                val locations = locationDtos.map { it.toDomainModel() }
-                return@withContext AuthResult.Success(locations)
+            if (response.isSuccessful && response.body() != null) {
+                val invitationDto = response.body()!!
+                val invitation = invitationDto.toDomain()
+                Result.success(invitation)
             } else {
-                val errorMessage = "Error al obtener ubicaciones"
-                Log.e(TAG, "Get locations failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
+                Result.failure(Exception(parseError(response, "Error al obtener invitación")))
             }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener invitación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
-            Log.e(TAG, "Get locations exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
+            Result.failure(e)
         }
     }
-    
-    override suspend fun deleteLocation(locationId: Long): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Deleting location: $locationId")
-            val response = workshopService.deleteLocation(locationId)
-            
-            if (response.isSuccessful) {
-                val message = response.body() ?: "Ubicación eliminada"
-                return@withContext AuthResult.Success(message)
-            } else {
-                val errorMessage = when (response.code()) {
-                    404 -> "Ubicación no encontrada"
-                    else -> "Error al eliminar ubicación"
-                }
-                Log.e(TAG, "Delete location failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Delete location exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
+
+    override suspend fun acceptInvitation(request: AcceptInvitationRequest): Result<String> {
+        return try {
+            val dto = AcceptInvitationRequestDto(
+                invitationCode = request.invitationCode,
+                email = request.email
             )
+            
+            val response = apiService.acceptInvitation(dto)
+            
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al aceptar invitación")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al aceptar invitación")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
-    
-    // ========== Service Templates ==========
-    
-    override suspend fun addServiceTemplate(
-        serviceName: String,
-        serviceCategory: String,
-        basePrice: Double,
-        estimatedDurationMinutes: Int,
-        description: String?
-    ): AuthResult<ServiceTemplate> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Adding service template")
-            val request = CreateServiceTemplateRequestDto(
-                serviceName = serviceName,
-                serviceCategory = serviceCategory,
-                basePrice = basePrice,
-                estimatedDurationMinutes = estimatedDurationMinutes,
-                description = description
-            )
-            
-            val response = workshopService.addServiceTemplate(request)
+
+    // ========== EMPLEADOS ==========
+
+    override suspend fun getWorkshopEmployees(workshopId: Long): Result<List<WorkshopEmployee>> {
+        return try {
+            val response = apiService.getWorkshopEmployees(workshopId)
             
             if (response.isSuccessful) {
-                val serviceDto = response.body()
-                if (serviceDto != null) {
-                    val service = serviceDto.toDomainModel()
-                    return@withContext AuthResult.Success(service)
+                // Si el body es null, devolver lista vacía en lugar de error
+                val employeesDto = response.body() ?: emptyList()
+                val employees = employeesDto.toDomain()
+                Result.success(employees)
+            } else {
+                // Si es 404, puede que simplemente no haya empleados aún, devolver lista vacía
+                if (response.code() == 404) {
+                    Result.success(emptyList())
                 } else {
-                    return@withContext AuthResult.Error("Empty response from server")
+                    Result.failure(Exception(parseError(response, "Error al obtener empleados")))
                 }
-            } else {
-                val errorMessage = when (response.code()) {
-                    400 -> "Datos inválidos"
-                    else -> "Error al agregar servicio"
-                }
-                Log.e(TAG, "Add service template failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
             }
+        } catch (e: HttpException) {
+            // Si es 404, devolver lista vacía
+            if (e.code() == 404) {
+                Result.success(emptyList())
+            } else {
+                Result.failure(Exception(parseHttpException(e, "Error al obtener empleados")))
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
-            Log.e(TAG, "Add service template exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
+            android.util.Log.e("WorkshopRepository", "getWorkshopEmployees - Error: ${e.message}")
+            android.util.Log.e("WorkshopRepository", "getWorkshopEmployees - Stack trace: ${e.stackTraceToString()}")
+            Result.failure(Exception("Error inesperado al obtener empleados: ${e.message}"))
         }
     }
-    
-    // ========== Capability Tags ==========
-    
-    override suspend fun addCapabilityTag(tag: String): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Adding capability tag: $tag")
-            val response = workshopService.addCapabilityTag(tag)
+
+    override suspend fun deactivateEmployee(workshopId: Long, employeeId: Long): Result<Unit> {
+        return try {
+            val response = apiService.deactivateEmployee(workshopId, employeeId)
             
             if (response.isSuccessful) {
-                val message = response.body() ?: "Tag agregado"
-                return@withContext AuthResult.Success(message)
+                Result.success(Unit)
             } else {
-                val errorMessage = "Error al agregar tag"
-                Log.e(TAG, "Add capability tag failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
+                Result.failure(Exception(parseError(response, "Error al desactivar empleado")))
             }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al desactivar empleado")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
-            Log.e(TAG, "Add capability tag exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
+            Result.failure(e)
         }
     }
-    
-    override suspend fun updateCapabilityTags(tags: List<String>): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Updating capability tags")
-            val response = workshopService.updateCapabilityTags(tags)
+
+    override suspend fun activateEmployee(workshopId: Long, employeeId: Long): Result<Unit> {
+        return try {
+            val response = apiService.activateEmployee(workshopId, employeeId)
             
             if (response.isSuccessful) {
-                val message = response.body() ?: "Tags actualizados"
-                return@withContext AuthResult.Success(message)
+                Result.success(Unit)
             } else {
-                val errorMessage = "Error al actualizar tags"
-                Log.e(TAG, "Update capability tags failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
+                Result.failure(Exception(parseError(response, "Error al activar empleado")))
             }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al activar empleado")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
-            Log.e(TAG, "Update capability tags exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
+            Result.failure(e)
         }
-    }
-    
-    // ========== Media Management ==========
-    
-    override suspend fun uploadLogo(imageFile: File): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Uploading logo")
-            val requestBody = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-            val part = MultipartBody.Part.createFormData("logo", imageFile.name, requestBody)
-            
-            val response = workshopService.uploadLogo(part)
-            
-            if (response.isSuccessful) {
-                val message = response.body() ?: "Logo subido exitosamente"
-                return@withContext AuthResult.Success(message)
-            } else {
-                val errorMessage = "Error al subir logo"
-                Log.e(TAG, "Upload logo failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Upload logo exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun addPhoto(imageFile: File): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Adding photo")
-            val requestBody = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-            val part = MultipartBody.Part.createFormData("photo", imageFile.name, requestBody)
-            
-            val response = workshopService.addPhoto(part)
-            
-            if (response.isSuccessful) {
-                val message = response.body() ?: "Foto agregada exitosamente"
-                return@withContext AuthResult.Success(message)
-            } else {
-                val errorMessage = "Error al agregar foto"
-                Log.e(TAG, "Add photo failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Add photo exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun deletePhoto(photoIndex: Int): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Deleting photo: $photoIndex")
-            val response = workshopService.deletePhoto(photoIndex)
-            
-            if (response.isSuccessful) {
-                val message = response.body() ?: "Foto eliminada"
-                return@withContext AuthResult.Success(message)
-            } else {
-                val errorMessage = "Error al eliminar foto"
-                Log.e(TAG, "Delete photo failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Delete photo exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    // ========== Subscription ==========
-    
-    override suspend fun getSubscriptionStatus(): AuthResult<SubscriptionInfo> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Getting subscription status")
-            val response = workshopService.getSubscriptionStatus()
-            
-            if (response.isSuccessful) {
-                val subscriptionDto = response.body()
-                if (subscriptionDto != null) {
-                    val subscription = subscriptionDto.toDomainModel()
-                    return@withContext AuthResult.Success(subscription)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
-                }
-            } else {
-                val errorMessage = "Error al obtener suscripción"
-                Log.e(TAG, "Get subscription status failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Get subscription status exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun updateSubscription(tier: String, autoRenew: Boolean?): AuthResult<SubscriptionInfo> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Updating subscription")
-            val request = UpdateSubscriptionRequestDto(tier = tier, autoRenew = autoRenew)
-            
-            val response = workshopService.updateSubscription(request)
-            
-            if (response.isSuccessful) {
-                val subscriptionDto = response.body()
-                if (subscriptionDto != null) {
-                    val subscription = subscriptionDto.toDomainModel()
-                    return@withContext AuthResult.Success(subscription)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
-                }
-            } else {
-                val errorMessage = "Error al actualizar suscripción"
-                Log.e(TAG, "Update subscription failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Update subscription exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    // ========== Invitations ==========
-    
-    override suspend fun createInvitation(invitedEmail: String): AuthResult<Invitation> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Creating invitation for: $invitedEmail")
-            val request = CreateInvitationRequestDto(invitedEmail)
-            
-            val response = workshopService.createInvitation(request)
-            
-            if (response.isSuccessful) {
-                val invitationDto = response.body()
-                if (invitationDto != null) {
-                    val invitation = invitationDto.toDomainModel()
-                    return@withContext AuthResult.Success(invitation)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
-                }
-            } else {
-                val errorMessage = when (response.code()) {
-                    400 -> "Email inválido"
-                    409 -> "Ya existe una invitación pendiente"
-                    else -> "Error al crear invitación"
-                }
-                Log.e(TAG, "Create invitation failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Create invitation exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun getWorkshopInvitations(): AuthResult<List<Invitation>> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Getting workshop invitations")
-            val response = workshopService.getWorkshopInvitations()
-            
-            if (response.isSuccessful) {
-                val invitationDtos = response.body() ?: emptyList()
-                val invitations = invitationDtos.map { it.toDomainModel() }
-                return@withContext AuthResult.Success(invitations)
-            } else {
-                val errorMessage = "Error al obtener invitaciones"
-                Log.e(TAG, "Get workshop invitations failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Get workshop invitations exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun acceptInvitation(code: String): AuthResult<String> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Accepting invitation: $code")
-            val response = workshopService.acceptInvitation(code)
-            
-            if (response.isSuccessful) {
-                val message = response.body() ?: "Invitación aceptada"
-                return@withContext AuthResult.Success(message)
-            } else {
-                val errorMessage = when (response.code()) {
-                    404 -> "Invitación no encontrada"
-                    400 -> "Invitación expirada o inválida"
-                    else -> "Error al aceptar invitación"
-                }
-                Log.e(TAG, "Accept invitation failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Accept invitation exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    override suspend fun getInvitationByCode(code: String): AuthResult<Invitation> = withContext(Dispatchers.IO) {
-        try {
-            Log.d(TAG, "Getting invitation by code: $code")
-            val response = workshopService.getInvitationByCode(code)
-            
-            if (response.isSuccessful) {
-                val invitationDto = response.body()
-                if (invitationDto != null) {
-                    val invitation = invitationDto.toDomainModel()
-                    return@withContext AuthResult.Success(invitation)
-                } else {
-                    return@withContext AuthResult.Error("Empty response from server")
-                }
-            } else {
-                val errorMessage = when (response.code()) {
-                    404 -> "Invitación no encontrada"
-                    else -> "Error al obtener invitación"
-                }
-                Log.e(TAG, "Get invitation by code failed: ${response.code()}")
-                return@withContext AuthResult.Error(errorMessage, response.code())
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Get invitation by code exception", e)
-            return@withContext AuthResult.Error(
-                e.message ?: "Error de conexión",
-                null
-            )
-        }
-    }
-    
-    // ========== Mapping Extensions ==========
-    
-    private fun WorkshopDto.toDomainModel(): Workshop {
-        return Workshop(
-            id = id ?: 0,
-            name = name ?: "",
-            description = shortDescription ?: description ?: "",
-            legalName = legalName,
-            ruc = ruc,
-            contactEmail = contactEmail ?: "",
-            contactPhone = contactPhone ?: "",
-            logoUrl = logoUrl,
-            photoUrls = photoUrls ?: emptyList(),
-            locations = locations?.map { it.toDomainModel() } ?: emptyList(),
-            serviceTemplates = serviceTemplates?.map { it.toDomainModel() } ?: emptyList(),
-            capabilityTags = capabilityTags ?: emptyList(),
-            subscriptionTier = subscriptionTier ?: "FREE",
-            subscriptionStatus = subscriptionStatus ?: "ACTIVE",
-            trustScore = trustScore ?: 0.0,
-            ownerId = ownerId ?: 0,
-            active = active ?: true,
-            createdAt = createdAt
-        )
-    }
-    
-    private fun LocationDto.toDomainModel(): Location {
-        return Location(
-            id = id ?: 0,
-            street = street ?: "",
-            city = city ?: "",
-            state = state ?: "",
-            zip = zip ?: "",
-            country = country ?: "",
-            latitude = latitude,
-            longitude = longitude,
-            active = active ?: true
-        )
-    }
-    
-    private fun ServiceTemplateDto.toDomainModel(): ServiceTemplate {
-        return ServiceTemplate(
-            id = id ?: 0,
-            serviceName = serviceName ?: "",
-            serviceCategory = serviceCategory ?: "",
-            basePrice = basePrice ?: 0.0,
-            estimatedDurationMinutes = estimatedDurationMinutes ?: 0,
-            description = description,
-            available = available ?: true
-        )
-    }
-    
-    private fun InvitationDto.toDomainModel(): Invitation {
-        return Invitation(
-            id = id ?: 0,
-            invitationCode = invitationCode ?: "",
-            workshopId = workshopId ?: 0,
-            workshopName = workshopName,
-            invitedEmail = invitedEmail ?: "",
-            status = status ?: "PENDING",
-            expiresAt = expiresAt,
-            createdAt = createdAt
-        )
-    }
-    
-    private fun SubscriptionDto.toDomainModel(): SubscriptionInfo {
-        return SubscriptionInfo(
-            tier = tier ?: "FREE",
-            status = status ?: "ACTIVE",
-            startDate = startDate,
-            expiresAt = expiresAt,
-            autoRenew = autoRenew ?: false
-        )
     }
 }
+
