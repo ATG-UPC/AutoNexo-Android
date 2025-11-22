@@ -1,22 +1,22 @@
-﻿package com.atg.autonexo.features.workshop.domain.models
+package com.atg.autonexo.features.workshop.domain.models
+
+import java.time.LocalDateTime
 
 data class Workshop(
     val id: Long,
+    val ownerUserId: Long,
     val name: String,
-    val description: String,
+    val shortDescription: String?,
     val legalName: String?,
     val ruc: String?,
-    val contactEmail: String,
-    val contactPhone: String,
+    val rucVerified: Boolean,
+    val trustScore: Float?,
+    val active: Boolean,
+    val deletedAt: LocalDateTime?,
     val logoUrl: String?,
     val photoUrls: List<String>,
-    val locations: List<Location>,
-    val serviceTemplates: List<ServiceTemplate>,
     val capabilityTags: List<String>,
-    val subscriptionTier: String,
-    val subscriptionStatus: String,
-    val trustScore: Double,
-    val ownerId: Long,
-    val active: Boolean,
-    val createdAt: String?
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime
 )
+

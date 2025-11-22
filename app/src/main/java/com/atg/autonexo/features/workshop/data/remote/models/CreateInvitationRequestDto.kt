@@ -2,12 +2,12 @@ package com.atg.autonexo.features.workshop.data.remote.models
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * Request DTO para crear una invitación
- * Endpoint: POST /api/v1/invitations
- */
 data class CreateInvitationRequestDto(
-    @SerializedName("invitedEmail")
-    val invitedEmail: String
+    @SerializedName("email")
+    val email: String? = null,
+    @SerializedName("message")
+    val message: String? = null,
+    @SerializedName("validityDays")
+    val validityDays: Int? = 365
 )
 

@@ -24,6 +24,12 @@ lifecycleViewmodel = "2.9.4" # ViewModel
 materialIconsExtended = "1.7.8" # Material icons extended
 kspVersion = "2.2.20-2.0.3"
 uiTextGoogleFonts = "1.9.2" # ksp plugin
+datastore = "1.1.1" # DataStore
+maps-compose = "6.1.0" # Google Maps Compose
+maps-ktx = "6.1.0" # Google Maps KTX
+play-services-maps = "19.0.0" # Play Services Maps
+play-services-location = "21.3.0" # Play Services Location
+accompanist-permissions = "0.36.0" # Accompanist Permissions
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -75,11 +81,22 @@ androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifec
 
 # Material icons extended
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
- # <- agrega esta línea (o la versión que quieras)
+
+# DataStore
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 
 androidx-compose-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
 play-services-basement = { module = "com.google.android.gms:play-services-basement", version.ref = "playServices" }
+
+# Google Maps
+maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "maps-compose" }
+maps-ktx = { module = "com.google.maps.android:maps-compose-utils", version.ref = "maps-ktx" }
+play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
+
+# Accompanist Permissions
+accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist-permissions" }
 
 
 [plugins]
