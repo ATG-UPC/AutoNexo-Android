@@ -65,6 +65,19 @@ fun AcceptInvitationScreen(
                 }
             )
 
+            OutlinedTextField(
+                value = uiState.email,
+                onValueChange = { viewModel.updateEmail(it) },
+                label = { Text("Email asociado a la invitación") },
+                placeholder = { Text("empleado@example.com") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                ),
+                leadingIcon = { Icon(Icons.Default.Person, null) }
+            )
+
             uiState.errorMessage?.let { error ->
                 Card(
                     colors = CardDefaults.cardColors(
@@ -85,7 +98,9 @@ fun AcceptInvitationScreen(
             Button(
                 onClick = { viewModel.acceptInvitation(onSuccess) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = uiState.code.length == 8 && !uiState.isLoading
+                enabled = uiState.code.length == 8 &&
+                        uiState.email.isNotBlank() &&
+                        !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(

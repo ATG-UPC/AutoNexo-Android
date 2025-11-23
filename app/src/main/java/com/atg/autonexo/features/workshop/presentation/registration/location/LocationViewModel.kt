@@ -113,14 +113,14 @@ class LocationViewModel @Inject constructor(
             
             addLocationUseCase(workshopId, location)
                 .onSuccess {
-                    // Obtener el nombre del taller para mostrar en la pantalla de código
+                    // Obtener la información del taller para mostrar en la pantalla de código
                     getMyWorkshopUseCase()
                         .onSuccess { workshop ->
                             _uiState.value = _uiState.value.copy(isLoading = false)
                             onSuccess(workshop.name)
                         }
-                        .onFailure { exception ->
-                            // Si falla obtener el taller, usar un nombre por defecto
+                        .onFailure {
+                            // Si falla, avanzar con un nombre genérico
                             _uiState.value = _uiState.value.copy(isLoading = false)
                             onSuccess("tu taller")
                         }

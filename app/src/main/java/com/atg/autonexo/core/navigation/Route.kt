@@ -25,10 +25,14 @@ sealed class Route(val route: String) {
             fun createRoute(workshopId: Long) = "workshop/registration/location/$workshopId"
         }
         object InvitationCodeDisplay : Route("workshop/invitation/code/{workshopName}") {
-            fun createRoute(workshopName: String) = "workshop/invitation/code/${android.net.Uri.encode(workshopName)}"
+            fun createRoute(workshopName: String) =
+                "workshop/invitation/code/${android.net.Uri.encode(workshopName)}"
         }
         object Management : Route("workshop/management/{workshopId}") {
             fun createRoute(workshopId: Long) = "workshop/management/$workshopId"
+        }
+        object InviteEmployee : Route("workshop/invitation/invite/{workshopId}") {
+            fun createRoute(workshopId: Long) = "workshop/invitation/invite/$workshopId"
         }
         object AcceptInvitation : Route("workshop/invitation/accept")
     }
