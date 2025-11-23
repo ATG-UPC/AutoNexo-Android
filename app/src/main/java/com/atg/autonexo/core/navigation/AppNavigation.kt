@@ -16,6 +16,7 @@ import com.atg.autonexo.features.workshop.presentation.registration.tags.TagsScr
 import com.atg.autonexo.features.workshop.presentation.registration.media.MediaScreen
 import com.atg.autonexo.features.workshop.presentation.registration.location.LocationScreen
 import com.atg.autonexo.features.workshop.presentation.invitation.WorkshopManagementScreen
+import com.atg.autonexo.features.workshop.presentation.invitation.InviteEmployeeScreen
 import com.atg.autonexo.features.workshop.presentation.invitation.AcceptInvitationScreen
 import com.atg.autonexo.features.workshop.presentation.invitation.InvitationCodeDisplayScreen
 import com.atg.autonexo.features.home.presentation.home.HomeScreen
@@ -266,9 +267,24 @@ fun AppNavigation(
             val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
             WorkshopManagementScreen(
                 workshopId = workshopId,
-                onBack = {
-                    navController.popBackStack()
+                onBack = { navController.popBackStack() },
+                onInviteEmployee = { id ->
+                    navController.navigate(Route.Workshop.InviteEmployee.createRoute(id))
                 }
+            )
+        }
+        
+        // Invite employee screen
+        composable(
+            route = Route.Workshop.InviteEmployee.route,
+            arguments = listOf(
+                navArgument("workshopId") { type = NavType.LongType }
+            )
+        ) { backStackEntry ->
+            val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
+            InviteEmployeeScreen(
+                workshopId = workshopId,
+                onBack = { navController.popBackStack() }
             )
         }
         

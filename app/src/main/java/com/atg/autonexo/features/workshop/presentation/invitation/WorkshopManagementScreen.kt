@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun WorkshopManagementScreen(
     workshopId: Long,
     onBack: () -> Unit,
+    onInviteEmployee: (Long) -> Unit,
     viewModel: WorkshopManagementViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -86,6 +87,18 @@ fun WorkshopManagementScreen(
                             }
                         }
                     }
+                }
+            }
+
+            // Botón Invitar
+            item {
+                Button(
+                    onClick = { onInviteEmployee(workshopId) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.PersonAdd, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Invitar Empleado")
                 }
             }
 

@@ -1,5 +1,6 @@
 package com.atg.autonexo.features.workshop.presentation.invitation
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.atg.autonexo.features.auth.domain.usecases.GetCurrentUserUseCase
@@ -21,11 +22,30 @@ class AcceptInvitationViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AcceptInvitationUiState())
     val uiState: StateFlow<AcceptInvitationUiState> = _uiState.asStateFlow()
 
+    init {
+        prefillEmail()
+    }
+
     fun updateCode(code: String) {
         _uiState.value = _uiState.value.copy(
             code = code.uppercase().take(8),
             errorMessage = null
         )
+    }
+
+    fun updateEmail(email: String) {
+        _uiState.value = _uiState.value.copy(email = email, errorMessage = null)
+    }
+
+    private fun prefillEmail() {
+        viewModelScope.launch {
+            getCurrentUserUseCase()
+                .onSuccess { user ->
+                    if (user.email.isNotBlank()) {
+                        _uiState.value = _uiState.value.copy(email = user.email)
+                    }
+                }
+        }
     }
 
     fun acceptInvitation(onSuccess: () -> Unit) {
@@ -38,46 +58,40 @@ class AcceptInvitationViewModel @Inject constructor(
             return
         }
 
+        if (currentState.email.isBlank()) {
+            _uiState.value = currentState.copy(
+                errorMessage = "El email es requerido"
+            )
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(currentState.email).matches()) {
+            _uiState.value = currentState.copy(
+                errorMessage = "Formato de email inválido"
+            )
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
 
-            // Obtener email del usuario actual
-            getCurrentUserUseCase()
-                .onSuccess { user ->
-                    val email = user.email
-                    
-                    if (email.isBlank()) {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = "No se pudo obtener el email del usuario"
-                        )
-                        return@launch
-                    }
+            val request = AcceptInvitationRequest(
+                invitationCode = currentState.code,
+                email = currentState.email.trim()
+            )
 
-                    val request = AcceptInvitationRequest(
-                        invitationCode = currentState.code,
-                        email = email
+            acceptInvitationUseCase(request)
+                .onSuccess { message ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = message
                     )
-
-                    acceptInvitationUseCase(request)
-                        .onSuccess { message ->
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                successMessage = message
-                            )
-                            onSuccess()
-                        }
-                        .onFailure { exception ->
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                errorMessage = exception.message ?: "Error al aceptar invitación"
-                            )
-                        }
+                    onSuccess()
                 }
                 .onFailure { exception ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = exception.message ?: "Error al obtener información del usuario"
+                        errorMessage = exception.message ?: "Error al aceptar invitación"
                     )
                 }
         }
