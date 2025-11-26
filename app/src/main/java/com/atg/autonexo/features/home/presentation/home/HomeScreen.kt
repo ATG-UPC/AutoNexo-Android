@@ -29,6 +29,25 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // Navegación que inyecta el workshopId cuando se va a Pago
+    val navigateWithWorkshop: (String) -> Unit = { route ->
+        if (route == BottomNavItem.Payment.route) {
+            val workshopId = uiState.workshop?.id
+
+            if (workshopId != null) {
+                // Navegamos con el id
+                onNavigate(
+                    com.atg.autonexo.core.navigation.Route.Payment.PaymentScreen
+                        .createRoute(workshopId)
+                )
+            } else {
+                // Si no hay workshop, por ejemplo mandamos al registro
+                onNavigate(BottomNavItem.WorkshopRegistration.route)
+            }
+        } else {
+            onNavigate(route)
+        }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -45,7 +64,8 @@ fun HomeScreen(
                     scope.launch {
                         drawerState.close()
                     }
-                }
+                },
+                onNavigate = navigateWithWorkshop
             )
         }
     ) {
@@ -72,7 +92,7 @@ fun HomeScreen(
             bottomBar = {
                 BottomNavigationBar(
                     currentRoute = currentRoute,
-                    onNavigate = onNavigate
+                    onNavigate = navigateWithWorkshop
                 )
             }
         ) { paddingValues ->
@@ -250,7 +270,8 @@ fun HomeScreen(
 fun NavigationDrawerContent(
     userEmail: String?,
     onLogoutClick: () -> Unit,
-    onCloseDrawer: () -> Unit
+    onCloseDrawer: () -> Unit,
+    onNavigate: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -289,62 +310,16 @@ fun NavigationDrawerContent(
 
         Divider(modifier = Modifier.padding(vertical = 16.dp))
 
-        // Opciones del menú
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text("Inicio") },
-            selected = false,
-            onClick = onCloseDrawer,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = null) },
-            label = { Text("Mi Perfil") },
-            selected = false,
-            onClick = onCloseDrawer,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        NavigationDrawerItem(
-            icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-            label = { Text("Configuración") },
-            selected = false,
-            onClick = onCloseDrawer,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-        // Botón de cerrar sesión
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.PowerSettingsNew,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            TextButton(
-                onClick = onLogoutClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Cerrar Sesión",
-                    color = MaterialTheme.colorScheme.error
-                )
+        SideNavigationBar(
+            onNavigate = { route ->
+                onCloseDrawer()
+                onNavigate(route)
+            },
+            onLogoutClick = {
+                onCloseDrawer()
+                onLogoutClick()
             }
-        }
+        )
     }
 }
 

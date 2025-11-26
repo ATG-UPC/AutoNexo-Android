@@ -16,6 +16,8 @@ sealed class BottomNavItem(
     object Services : BottomNavItem("home/services", "Servicios", Icons.Default.Build)
     object WorkshopRegistration : BottomNavItem("workshop/registration/basic_info", "Registro", Icons.Default.Add)
     object Profile : BottomNavItem("home/profile", "Perfil", Icons.Default.Person)
+
+    object Payment : BottomNavItem("payment/subscription", "Pago", Icons.Default.Payment)
 }
 
 @Composable
@@ -29,7 +31,7 @@ fun BottomNavigationBar(
         BottomNavItem.Requests,
         BottomNavItem.Services,
         BottomNavItem.WorkshopRegistration,
-        BottomNavItem.Profile
+        BottomNavItem.Profile,
     )
 
     NavigationBar(modifier = modifier) {
