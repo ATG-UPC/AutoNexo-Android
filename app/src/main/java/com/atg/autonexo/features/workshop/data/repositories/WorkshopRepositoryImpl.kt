@@ -18,11 +18,9 @@ import com.atg.autonexo.features.workshop.domain.models.Workshop
 import com.atg.autonexo.features.workshop.domain.models.WorkshopEmployee
 import com.atg.autonexo.features.workshop.domain.repositories.WorkshopRepository
 import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.File
 import java.io.FileOutputStream

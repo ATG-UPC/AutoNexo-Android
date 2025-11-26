@@ -21,6 +21,7 @@ import com.atg.autonexo.features.workshop.presentation.invitation.AcceptInvitati
 import com.atg.autonexo.features.workshop.presentation.invitation.InvitationCodeDisplayScreen
 import com.atg.autonexo.features.home.presentation.home.HomeScreen
 import com.atg.autonexo.features.matching.presentation.request.RequestScreen
+import com.atg.autonexo.features.payment.presentation.payment.PaymentScreen
 
 @Composable
 fun AppNavigation(
@@ -304,6 +305,20 @@ fun AppNavigation(
         composable(Route.Matching.Request.route){
             RequestScreen()
         }
+
+        // PAYMENT
+        composable(
+            route = Route.Payment.PaymentScreen.routeWithArg,
+            arguments = listOf(
+                navArgument("workshopId") {
+                    type = NavType.LongType
+                }
+            )
+        ) { backStackEntry ->
+            val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
+            PaymentScreen(workshopId = workshopId)
+        }
+
     }
 }
 
