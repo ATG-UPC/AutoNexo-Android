@@ -12,7 +12,7 @@ sealed class Route(val route: String) {
         object ForgotPassword : Route("auth/forgot_password")
         object ResetPassword : Route("auth/reset_password")
     }
-    
+    // Workshop Navigation Routes
     object Workshop {
         object BasicInfo : Route("workshop/registration/basic_info")
         object Tags : Route("workshop/registration/tags/{workshopId}") {
@@ -37,7 +37,18 @@ sealed class Route(val route: String) {
         object AcceptInvitation : Route("workshop/invitation/accept")
     }
 
-    
+    // Payment Navigation Routes
+    object Payment{
+        object PaymentScreen : Route("payment/subscription"){
+
+
+            // ruta con argumento para NavHost
+            const val routeWithArg = "payment/subscription/{workshopId}"
+
+            fun createRoute(workshopId: Long) = "payment/subscription/$workshopId"
+        }
+    }
+
     // Home Navigation Routes
     object HomeNav {
         object Requests : Route("home/requests")
