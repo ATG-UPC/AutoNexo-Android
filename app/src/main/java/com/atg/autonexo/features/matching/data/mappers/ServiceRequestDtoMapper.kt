@@ -1,15 +1,15 @@
 package com.atg.autonexo.features.matching.data.mappers
 
-import com.atg.autonexo.features.matching.data.remote.models.ServiceRequestResponseDto
-import com.atg.autonexo.features.matching.domain.models.ServiceRequest
+import com.atg.autonexo.features.matching.data.remote.models.RequestResponseDto
+import com.atg.autonexo.features.matching.domain.models.Request
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-fun ServiceRequestResponseDto.toDomain(): ServiceRequest {
+fun RequestResponseDto.toDomain(): Request {
     val createdAt = parseDateTime(this.createdAt) ?: LocalDateTime.now()
     val cancelledAt = this.canceledAt?.let { parseDateTime(it) }
 
-    return ServiceRequest(
+    return Request(
         id = id,
         userId = userId,
         vehicleId = vehicleId,
@@ -32,6 +32,6 @@ private fun parseDateTime(dateTimeString: String): LocalDateTime? {
     }
 }
 
-fun List<ServiceRequestResponseDto>.toDomain(): List<ServiceRequest> {
+fun List<RequestResponseDto>.toDomain(): List<Request> {
     return this.map { it.toDomain() }
 }

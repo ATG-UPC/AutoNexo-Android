@@ -2,7 +2,7 @@ package com.atg.autonexo.features.matching.domain.models
 
 import java.time.LocalDateTime
 
-data class ServiceRequest (
+data class Request (
     var id: Long,
     var userId: Long,
     var vehicleId: Long,
@@ -11,7 +11,7 @@ data class ServiceRequest (
     var latitude: Double,
     var longitude: Double,
     var searchRadiusKm: Int.Companion,
-    var status: ServiceRequestStatus,
+    var status: RequestStatus,
     var cancelledAt: LocalDateTime?,
     var createdAt: LocalDateTime
 )

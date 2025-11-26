@@ -37,7 +37,9 @@ sealed class Route(val route: String) {
         object AcceptInvitation : Route("workshop/invitation/accept")
     }
 
-    
+    object Matching {
+        object Request : Route("matching/request")
+    }
     // Home Navigation Routes
     object HomeNav {
         object Requests : Route("home/requests")

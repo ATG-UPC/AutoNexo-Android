@@ -2,20 +2,20 @@ package com.atg.autonexo.features.matching.data.repositories
 
 import com.atg.autonexo.features.auth.data.remote.models.ErrorResponseDto
 import com.atg.autonexo.features.matching.data.mappers.toDomain
-import com.atg.autonexo.features.matching.data.remote.services.ServiceRequestApiService
-import com.atg.autonexo.features.matching.domain.models.ServiceRequest
-import com.atg.autonexo.features.matching.domain.repositories.ServiceRequestRepository
+import com.atg.autonexo.features.matching.data.remote.services.RequestApiService
+import com.atg.autonexo.features.matching.domain.models.Request
+import com.atg.autonexo.features.matching.domain.repositories.RequestRepository
 import com.google.gson.Gson
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
-class ServiceRequestRepositoryImpl @Inject constructor(
-    private val apiService: ServiceRequestApiService,
+class RequestRepositoryImpl @Inject constructor(
+    private val apiService: RequestApiService,
     private val gson: Gson
-) : ServiceRequestRepository {
+) : RequestRepository {
 
-    override suspend fun getServiceRequests(): Result<List<ServiceRequest>> {
+    override suspend fun getServiceRequests(): Result<List<Request>> {
         return try {
             val response = apiService.getServiceRequests()
 

@@ -1,11 +1,11 @@
 package com.atg.autonexo.features.matching.data.di
 
 import com.atg.autonexo.features.matching.data.remote.services.OfferApiService
-import com.atg.autonexo.features.matching.data.remote.services.ServiceRequestApiService
+import com.atg.autonexo.features.matching.data.remote.services.RequestApiService
 import com.atg.autonexo.features.matching.data.repositories.OfferRepositoryImpl
-import com.atg.autonexo.features.matching.data.repositories.ServiceRequestRepositoryImpl
+import com.atg.autonexo.features.matching.data.repositories.RequestRepositoryImpl
 import com.atg.autonexo.features.matching.domain.repositories.OfferRepository
-import com.atg.autonexo.features.matching.domain.repositories.ServiceRequestRepository
+import com.atg.autonexo.features.matching.domain.repositories.RequestRepository
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -36,16 +36,16 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideServiceRequestApiService(retrofit: Retrofit): ServiceRequestApiService {
-        return retrofit.create(ServiceRequestApiService::class.java)
+    fun provideServiceRequestApiService(retrofit: Retrofit): RequestApiService {
+        return retrofit.create(RequestApiService::class.java)
     }
 
     @Provides
     @Singleton
     fun provideServiceRequestRepository(
-        serviceRequestApiService: ServiceRequestApiService,
+        requestApiService: RequestApiService,
         gson: Gson
-    ): ServiceRequestRepository {
-        return ServiceRequestRepositoryImpl(serviceRequestApiService, gson)
+    ): RequestRepository {
+        return RequestRepositoryImpl(requestApiService, gson)
     }
 }
