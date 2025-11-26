@@ -1,11 +1,10 @@
 package com.atg.autonexo.features.matching.data.remote.models
 
 import com.atg.autonexo.features.matching.domain.models.ServiceCatalog
-import com.atg.autonexo.features.matching.domain.models.ServiceRequestStatus
+import com.atg.autonexo.features.matching.domain.models.RequestStatus
 import com.google.gson.annotations.SerializedName
-import java.time.LocalDateTime
 
-data class ServiceRequestResponseDto(
+data class RequestResponseDto(
 
     @SerializedName("id")
     val id: Long,
@@ -24,7 +23,7 @@ data class ServiceRequestResponseDto(
     @SerializedName("searchRadiusKm")
     val searchRadiusKm: Int,
     @SerializedName("status")
-    val status: ServiceRequestStatus,
+    val status: RequestStatus,
     @SerializedName("createdAt")
     val createdAt: String,
     @SerializedName("canceledAt")

@@ -37,6 +37,10 @@ sealed class Route(val route: String) {
         object AcceptInvitation : Route("workshop/invitation/accept")
     }
 
+    object Matching {
+        object Request : Route("matching/request")
+    }
+
     // Payment Navigation Routes
     object Payment{
         object PaymentScreen : Route("payment/subscription"){
@@ -48,6 +52,7 @@ sealed class Route(val route: String) {
             fun createRoute(workshopId: Long) = "payment/subscription/$workshopId"
         }
     }
+
 
     // Home Navigation Routes
     object HomeNav {
