@@ -1,17 +1,12 @@
 package com.atg.autonexo.features.payment.presentation.payment
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,6 +23,7 @@ fun PaymentScreen(
     viewModel: PaymentViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         viewModel.loadSubscription()
@@ -37,6 +33,7 @@ fun PaymentScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(scrollState)
             .padding(24.dp),
         horizontalAlignment = Alignment.Start
     ) {
@@ -44,6 +41,8 @@ fun PaymentScreen(
             text = "Mi Suscripción",
             style = MaterialTheme.typography.headlineLarge
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         when {
             uiState.isLoading -> {
@@ -60,7 +59,6 @@ fun PaymentScreen(
             uiState.payment != null -> {
                 val p = uiState.payment!!
 
-                // Decidimos a qué tier cambiar
                 val nextTier = when (p.subscriptionTier) {
                     SubscriptionTier.FREE -> SubscriptionTier.BASIC
                     SubscriptionTier.BASIC -> SubscriptionTier.PREMIUM
@@ -88,5 +86,134 @@ fun PaymentScreen(
                 }
             }
         }
+
+        // Tarjeta tipo Plan Pro
+        Spacer(modifier = Modifier.height(32.dp))
+
+        PlanCard(
+            modifier = Modifier.fillMaxWidth(),
+            title = "Basic",
+            subtitle = "FIRST STEPS TO JOIN AUTONEXO'S TEAM AND IMPROVE YOUR BUSINESS",
+            price = "$10",
+            features = listOf(
+                "Profile and service management",
+                "Price catalog",
+                "Service reports",
+                "Integrated payments",
+                "Up to 50 active clients"
+            ),
+            buttonLabel = "Join Basic",
+            onJoinClick = {
+                viewModel.updateSubscriptionTier(SubscriptionTier.BASIC)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        PlanCard(
+            modifier = Modifier.fillMaxWidth(),
+            title = "Premiun",
+            subtitle = "Perfect for serious businesses looking to expand their services and technical capabilities.",
+            price = "$20",
+            features = listOf(
+                "Multi-site management",
+                "Marketing and promotions",
+                "Financial reporting",
+                "Unlimited customers and mechanics",
+                "Priority technical support"
+            ),
+            buttonLabel = "Join Premiun",
+            onJoinClick = {
+                viewModel.updateSubscriptionTier(SubscriptionTier.PREMIUM)
+            }
+        )
+    }
+}
+
+/**
+ * Tarjeta de plan *
+ */
+@Composable
+fun PlanCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    subtitle: String,
+    price: String,
+    features: List<String>,
+    buttonLabel: String,
+    onJoinClick: () -> Unit
+) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(24.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = price,
+                style = MaterialTheme.typography.displaySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            features.forEach { feature ->
+                FeatureItem(feature)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedButton(
+                onClick = onJoinClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                border = ButtonDefaults.outlinedButtonBorder
+            ) {
+                Text(buttonLabel)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeatureItem(text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
