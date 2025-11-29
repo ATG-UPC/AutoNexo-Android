@@ -5,7 +5,6 @@ import com.atg.autonexo.features.matching.domain.models.RequestStatus
 import com.google.gson.annotations.SerializedName
 
 data class RequestResponseDto(
-
     @SerializedName("id")
     val id: Long,
     @SerializedName("userId")
