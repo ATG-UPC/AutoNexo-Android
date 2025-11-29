@@ -60,5 +60,11 @@ sealed class Route(val route: String) {
         object Services : Route("home/services")
         object Profile : Route("home/profile")
     }
+
+    // Profile Navigation Routes
+    object Profile {
+        object EditProfile : Route("profile/edit")
+        object NewPassword : Route("profile/new_password")
+    }
 }
 
