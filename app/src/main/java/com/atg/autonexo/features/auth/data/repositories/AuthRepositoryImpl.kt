@@ -8,6 +8,8 @@ import com.atg.autonexo.features.auth.data.remote.models.VerifyEmailRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.ResendVerificationRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.ForgotPasswordRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.ResetPasswordRequestDto
+import com.atg.autonexo.features.auth.data.remote.models.UpdateProfileRequestDto
+import com.atg.autonexo.features.auth.data.remote.models.ChangePasswordRequestDto
 import com.atg.autonexo.features.auth.data.remote.services.AuthApiService
 import com.atg.autonexo.features.auth.domain.models.Role
 import com.atg.autonexo.features.auth.domain.models.SignUpRequest
@@ -426,6 +428,127 @@ class AuthRepositoryImpl @Inject constructor(
             android.util.Log.e("AuthRepository", "getCurrentUser - Exception: ${e.message}")
             android.util.Log.e("AuthRepository", "getCurrentUser - Stack trace: ${e.stackTraceToString()}")
             Result.failure(Exception("Error inesperado al obtener usuario: ${e.message}"))
+        }
+    }
+
+    override suspend fun updateProfile(firstName: String, lastName: String, phoneNumber: String): Result<User> {
+        return try {
+            val request = UpdateProfileRequestDto(
+                firstName = firstName.trim(),
+                lastName = lastName.trim(),
+                phoneNumber = phoneNumber.trim()
+            )
+            
+            val response = apiService.updateProfile(request)
+            
+            if (response.isSuccessful && response.body() != null) {
+                val userDto = response.body()!!
+                val user = userDto.toDomain()
+                Result.success(user)
+            } else {
+                val errorBodyString = try {
+                    response.errorBody()?.string() ?: ""
+                } catch (ex: Exception) {
+                    ""
+                }
+                
+                val errorMessage = when {
+                    errorBodyString.isNotBlank() -> {
+                        try {
+                            val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
+                            errorResponse.message ?: errorResponse.error ?: "Error al actualizar perfil"
+                        } catch (ex: Exception) {
+                            "Error al actualizar perfil: $errorBodyString"
+                        }
+                    }
+                    else -> "Error al actualizar perfil: ${response.message()}"
+                }
+                
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: HttpException) {
+            val errorBodyString = try {
+                e.response()?.errorBody()?.string() ?: ""
+            } catch (ex: Exception) {
+                ""
+            }
+            
+            val errorMessage = when {
+                errorBodyString.isNotBlank() -> {
+                    try {
+                        val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
+                        errorResponse.message ?: errorResponse.error ?: "Error al actualizar perfil"
+                    } catch (ex: Exception) {
+                        "Error al actualizar perfil: $errorBodyString"
+                    }
+                }
+                else -> "Error HTTP: ${e.message()}"
+            }
+            
+            Result.failure(Exception(errorMessage))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(Exception("Error inesperado al actualizar perfil: ${e.message}"))
+        }
+    }
+
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Result<String> {
+        return try {
+            val request = ChangePasswordRequestDto(
+                currentPassword = currentPassword,
+                newPassword = newPassword
+            )
+            
+            val response = apiService.changePassword(request)
+            
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: "Contraseña actualizada exitosamente")
+            } else {
+                val errorBodyString = try {
+                    response.errorBody()?.string() ?: ""
+                } catch (ex: Exception) {
+                    ""
+                }
+                
+                val errorMessage = when {
+                    errorBodyString.isNotBlank() -> {
+                        try {
+                            val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
+                            errorResponse.message ?: errorResponse.error ?: "Error al cambiar contraseña"
+                        } catch (ex: Exception) {
+                            "Error al cambiar contraseña: $errorBodyString"
+                        }
+                    }
+                    else -> "Error al cambiar contraseña: ${response.message()}"
+                }
+                
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: HttpException) {
+            val errorBodyString = try {
+                e.response()?.errorBody()?.string() ?: ""
+            } catch (ex: Exception) {
+                ""
+            }
+            
+            val errorMessage = when {
+                errorBodyString.isNotBlank() -> {
+                    try {
+                        val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
+                        errorResponse.message ?: errorResponse.error ?: "Error al cambiar contraseña"
+                    } catch (ex: Exception) {
+                        "Error al cambiar contraseña: $errorBodyString"
+                    }
+                }
+                else -> "Error HTTP: ${e.message()}"
+            }
+            
+            Result.failure(Exception(errorMessage))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(Exception("Error inesperado al cambiar contraseña: ${e.message}"))
         }
     }
 }
