@@ -10,3 +10,4 @@ class GetProfileUseCase @Inject constructor(
     suspend operator fun invoke(): Result<Profile> = repository.getProfile()
 }
 
+

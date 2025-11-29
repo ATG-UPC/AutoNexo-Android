@@ -3,6 +3,7 @@ package com.atg.autonexo.features.profile.presentation.editprofile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.atg.autonexo.features.auth.domain.usecases.GetCurrentUserUseCase
+import com.atg.autonexo.features.profile.domain.usecases.UpdateProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +13,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val updateProfileUseCase: UpdateProfileUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditProfileUiState())
@@ -65,28 +67,38 @@ class EditProfileViewModel @Inject constructor(
             return
         }
 
-        if (currentState.email.isBlank()) {
-            _uiState.value = currentState.copy(errorMessage = "El email es requerido")
+        if (currentState.phoneNumber.isBlank()) {
+            _uiState.value = currentState.copy(errorMessage = "El teléfono es requerido")
             return
         }
 
-        if (currentState.phoneNumber.isBlank()) {
-            _uiState.value = currentState.copy(errorMessage = "El teléfono es requerido")
+        // Separar firstName y lastName del fullName
+        val nameParts = currentState.fullName.trim().split("\\s+".toRegex())
+        val firstName = if (nameParts.isNotEmpty()) nameParts[0] else ""
+        val lastName = if (nameParts.size > 1) nameParts.subList(1, nameParts.size).joinToString(" ") else ""
+
+        if (firstName.isBlank()) {
+            _uiState.value = currentState.copy(errorMessage = "El nombre es requerido")
             return
         }
 
         viewModelScope.launch {
             _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
 
-            // TODO: Implementar actualización de perfil en el backend
-            // Por ahora, simulamos éxito
-            kotlinx.coroutines.delay(500)
-
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                isSaveSuccessful = true
-            )
-            onSuccess()
+            updateProfileUseCase(firstName, lastName, currentState.phoneNumber)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isSaveSuccessful = true
+                    )
+                    onSuccess()
+                }
+                .onFailure { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Error al actualizar perfil"
+                    )
+                }
         }
     }
 
@@ -94,4 +106,5 @@ class EditProfileViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
 }
+
 

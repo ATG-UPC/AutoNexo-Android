@@ -57,6 +57,7 @@ fun NewPasswordScreen(
             // Card blanco con contenido
             NewPasswordContent(
                 uiState = uiState,
+                onCurrentPasswordChange = viewModel::updateCurrentPassword,
                 onNewPasswordChange = viewModel::updateNewPassword,
                 onRepeatPasswordChange = viewModel::updateRepeatPassword,
                 onSave = {
@@ -131,6 +132,7 @@ private fun NewPasswordHeader(onBack: () -> Unit) {
 @Composable
 private fun NewPasswordContent(
     uiState: NewPasswordUiState,
+    onCurrentPasswordChange: (String) -> Unit,
     onNewPasswordChange: (String) -> Unit,
     onRepeatPasswordChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -152,10 +154,38 @@ private fun NewPasswordContent(
 
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Change Password field
+            // Current Password field
             Column {
                 Text(
-                    text = "Change Password",
+                    text = "Current Password",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    ),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = uiState.currentPassword,
+                    onValueChange = onCurrentPasswordChange,
+                    placeholder = {
+                        Text(
+                            text = "Type your current password",
+                            color = TextSecondary.copy(alpha = 0.6f)
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    visualTransformation = PasswordVisualTransformation(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    )
+                )
+            }
+
+            // New Password field
+            Column {
+                Text(
+                    text = "New Password",
                     style = MaterialTheme.typography.labelMedium.copy(
                         fontSize = 13.sp,
                         color = TextSecondary
@@ -242,4 +272,5 @@ private fun NewPasswordContent(
         }
     }
 }
+
 
