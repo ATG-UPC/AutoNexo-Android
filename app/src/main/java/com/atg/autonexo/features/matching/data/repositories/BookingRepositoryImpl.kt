@@ -2,12 +2,14 @@ package com.atg.autonexo.features.matching.data.repositories
 
 import com.atg.autonexo.features.auth.data.remote.models.ErrorResponseDto
 import com.atg.autonexo.features.matching.data.mappers.toDomain
+import com.atg.autonexo.features.matching.data.remote.models.AcceptScheduleChangeRequestDto
 import com.atg.autonexo.features.matching.data.remote.services.BookingApiService
 import com.atg.autonexo.features.matching.domain.models.Booking
 import com.atg.autonexo.features.matching.domain.repositories.BookingRepository
 import com.google.gson.Gson
 import retrofit2.HttpException
 import java.io.IOException
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 class BookingRepositoryImpl @Inject constructor(
@@ -27,6 +29,27 @@ class BookingRepositoryImpl @Inject constructor(
             }
         } catch (e: HttpException) {
             Result.failure(Exception(parseHttpException(e, "Error al obtener Agenda")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun acceptScheduleChange(bookingId: Long, newScheduledDate: LocalDateTime): Result<Unit> {
+        return try {
+            val request = AcceptScheduleChangeRequestDto(
+                newScheduledDate = newScheduledDate
+            )
+            val response = apiService.acceptScheduleChange(bookingId, request)
+
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al aceptar cambio de horario")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al aceptar cambio de horario")))
         } catch (e: IOException) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
