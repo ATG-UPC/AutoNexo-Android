@@ -14,7 +14,9 @@ sealed class BottomNavItem(
     object Home : BottomNavItem("home", "Inicio", Icons.Default.Home)
     object Requests : BottomNavItem("matching/request", "Solicitudes", Icons.Default.Notifications)
     object Services : BottomNavItem("home/services", "Servicios", Icons.Default.Build)
-    object WorkshopRegistration : BottomNavItem("workshop/registration/basic_info", "Registro", Icons.Default.Add)
+    object WorkshopRegistration :
+        BottomNavItem("workshop/registration/basic_info", "Registro", Icons.Default.Add)
+
     object Profile : BottomNavItem("home/profile", "Perfil", Icons.Default.Person)
     object Payment : BottomNavItem("payment/subscription", "Pago", Icons.Default.Payment)
 
