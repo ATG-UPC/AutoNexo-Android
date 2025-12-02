@@ -6,6 +6,6 @@ import javax.inject.Inject
 class WithdrawOfferUseCase @Inject constructor(
     private val repository: OfferRepository
 ) {
-    suspend operator fun invoke(workshopId: Long, offerId: Long) =
+    suspend operator fun invoke(offerId: Long) =
         repository.withdrawOffer(offerId)
 }
