@@ -212,6 +212,7 @@ fun WorkshopManagementScreen(
             }
 
             // Estadísticas de Empleados
+            /*
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth()
@@ -248,6 +249,7 @@ fun WorkshopManagementScreen(
                     }
                 }
             }
+            */
 
             // Lista de Empleados
             item {
