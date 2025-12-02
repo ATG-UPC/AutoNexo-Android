@@ -34,6 +34,7 @@ class HomeViewModel @Inject constructor(
                 .onSuccess { homeInfo ->
                     _uiState.value = _uiState.value.copy(
                         userEmail = homeInfo.userEmail,
+                        userName = homeInfo.userName,
                         workshop = homeInfo.workshop,
                         hasWorkshop = homeInfo.workshop != null,
                         isLoading = false

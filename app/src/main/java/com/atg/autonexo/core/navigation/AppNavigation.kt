@@ -347,7 +347,12 @@ fun AppNavigation(
             )
         ) { backStackEntry ->
             val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
-            PaymentScreen(workshopId = workshopId)
+            PaymentScreen(
+                workshopId = workshopId,
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
     }
