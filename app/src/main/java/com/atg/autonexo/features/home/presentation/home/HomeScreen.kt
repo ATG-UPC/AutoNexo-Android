@@ -879,6 +879,12 @@ private fun ServiceCard(
     }
 }
 
+private val DrawerBackground = Color(0xFF1E1E1E)
+private val DrawerHeaderTop = Color(0xFF1E2B36)
+private val DrawerHeaderBottom = Color(0xFF253442)
+private val TextWhite = Color(0xFFFFFFFF)
+private val LogoRed = Color(0xFFFF6B6B)
+
 @Composable
 fun NavigationDrawerContent(
     userEmail: String?,
@@ -915,7 +921,6 @@ fun NavigationDrawerContent(
                     modifier = Modifier.size(24.dp)
                 )
             }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -954,7 +959,6 @@ fun NavigationDrawerContent(
                 )
             }
         }
-
         SideNavigationBar(
             onNavigate = { route ->
                 onCloseDrawer()
