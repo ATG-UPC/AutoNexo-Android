@@ -3,6 +3,9 @@ package com.atg.autonexo.features.workshop.presentation.registration.basicinfo
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,13 +30,21 @@ fun BasicInfoScreen(
         viewModel.checkExistingWorkshop(
             onWorkshopExists = { workshopId ->
                 // Si ya existe, navegar directamente a la siguiente pantalla
-                onNext(workshopId)
+                //onNext(workshopId)
             },
             onNoWorkshop = {
                 // Si no existe, continuar con el formulario
             }
         )
+
+        viewModel.loadMyWorkshop()
     }
+
+    val showLabel = uiState.ogName.isBlank() &&
+            uiState.ogShortDescription.isBlank() &&
+            uiState.ogLegalName.isBlank() &&
+            uiState.ogRuc.isBlank() &&
+            !uiState.isLoading
 
     Column(
         modifier = Modifier
@@ -51,7 +62,31 @@ fun BasicInfoScreen(
         OutlinedTextField(
             value = uiState.name,
             onValueChange = viewModel::updateName,
-            label = { Text("Nombre del Workshop *") },
+            trailingIcon = {
+                if(!showLabel){
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar Nombre",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if(showLabel){
+                    Text("Nombre del Workshop *")
+                } else{
+                    Text("Editar Nombre del Workshop")
+                }
+
+            },
+            placeholder = {
+                if(!showLabel){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(uiState.ogName)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading,
@@ -71,7 +106,31 @@ fun BasicInfoScreen(
         OutlinedTextField(
             value = uiState.shortDescription,
             onValueChange = viewModel::updateShortDescription,
-            label = { Text("Descripción Corta") },
+            trailingIcon = {
+                if(!showLabel){
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar descripción",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if(showLabel){
+                    Text("Descripción del Workshop *")
+                } else{
+                    Text("Editar Descripción del Workshop")
+                }
+
+            },
+            placeholder = {
+                if(!showLabel){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(uiState.ogShortDescription)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             maxLines = 3,
             enabled = !uiState.isLoading,
@@ -93,7 +152,31 @@ fun BasicInfoScreen(
         OutlinedTextField(
             value = uiState.legalName,
             onValueChange = viewModel::updateLegalName,
-            label = { Text("Nombre Legal") },
+            trailingIcon = {
+                if(!showLabel){
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar Nombre legal",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if(showLabel){
+                    Text("Nombre legal del Workshop *")
+                } else{
+                    Text("Editar Nombre legal del Workshop")
+                }
+
+            },
+            placeholder = {
+                if(!showLabel){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(uiState.ogLegalName)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading,
@@ -118,10 +201,25 @@ fun BasicInfoScreen(
                     viewModel.updateRuc(newValue)
                 }
             },
-            label = { Text("RUC") },
+            trailingIcon = {
+                if(!showLabel){
+                    Icon(
+                        imageVector = Icons.Default.Block,
+                        contentDescription = "No se puede editar RUC",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if(showLabel){
+                    Text("Ruc del Workshop *")
+                } else{
+                    Text(uiState.ogRuc)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !uiState.isLoading,
+            enabled = if(uiState.ogRuc.isNotBlank()) false else !uiState.isLoading,
             supportingText = {
                 if (uiState.ruc.isNotBlank() && uiState.ruc.length != 11) {
                     Text(
@@ -146,7 +244,14 @@ fun BasicInfoScreen(
         }
 
         Button(
-            onClick = { viewModel.createWorkshop(onNext) },
+            onClick = {
+                if (showLabel){
+                    viewModel.createWorkshop(onNext)
+                }
+                else{
+                    viewModel.saveEdits(onNext)
+                }
+                      },
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading && 
                      uiState.name.isNotBlank() && 
@@ -166,5 +271,7 @@ fun BasicInfoScreen(
             }
         }
     }
+
+
 }
 
