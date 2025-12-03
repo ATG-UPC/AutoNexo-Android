@@ -61,7 +61,7 @@ fun SideNavigationBar(
 
         // Payment
         DrawerMenuItem(
-            icon = Icons.Default.Phone,
+            icon = Icons.Default.ShoppingCart,
             text = "Payment",
             onClick = { onNavigate(BottomNavItem.Payment.route) }
         )
@@ -70,7 +70,7 @@ fun SideNavigationBar(
 
         // Support and Assistance
         DrawerMenuItem(
-            icon = Icons.Default.ShoppingCart,
+            icon = Icons.Default.Phone,
             text = "Support and Assistance",
             onClick = {
                 // TODO: Navegar a Support cuando esté implementado
