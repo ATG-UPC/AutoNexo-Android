@@ -2,7 +2,7 @@ package com.atg.autonexo.features.workshop.domain.models
 
 data class Location(
     val id: Long,
-    val name: String,
+    val name: String?,
     val street: String,
     val city: String,
     val state: String,

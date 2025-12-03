@@ -87,7 +87,6 @@ fun MediaScreen(
                     contentScale = ContentScale.Fit
                 )
 
-                // Solo puedes "borrar" el logo si es uno nuevo (Uri local)
                 if (uiState.logoUri != null) {
                     IconButton(
                         onClick = { viewModel.removeLogo() },

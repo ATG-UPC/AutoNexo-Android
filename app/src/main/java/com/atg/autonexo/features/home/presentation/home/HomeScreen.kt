@@ -1,8 +1,6 @@
 package com.atg.autonexo.features.home.presentation.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +11,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -21,10 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import com.atg.autonexo.features.payment.domain.models.Payment
+import com.atg.autonexo.features.payment.domain.models.SubscriptionTier
+import com.atg.autonexo.features.payment.presentation.payment.PaymentViewModel
 import kotlinx.coroutines.launch
 
 // Colores del diseño
@@ -41,19 +45,27 @@ private val StatusPending = Color(0xFFFFC107)
 private val StatusDone = Color(0xFF4CAF50)
 private val IconGray = Color(0xFFA7A7A7)
 
+// Colores del drawer
+private val DrawerBackground = Color(0xFF1E1E1E)
+private val DrawerHeaderTop = Color(0xFF1E2B36)
+private val DrawerHeaderBottom = Color(0xFF253442)
+private val TextWhite = Color(0xFFFFFFFF)
+private val LogoRed = Color(0xFFFF6B6B)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     currentRoute: String,
     onNavigate: (String) -> Unit,
     onLogout: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    paymentViewModel: PaymentViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by homeViewModel.uiState.collectAsState()
+    val paymentUiState by paymentViewModel.uiState.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    
-    // Navegación que inyecta el workshopId cuando se va a Pago
+
     val navigateWithWorkshop: (String) -> Unit = { route ->
         if (route == BottomNavItem.Payment.route) {
             val workshopId = uiState.workshop?.id
@@ -71,10 +83,13 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        paymentViewModel.loadSubscription()
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            // 1. Add ModalDrawerSheet here to handle the shape and background
             ModalDrawerSheet(
                 drawerShape = RoundedCornerShape(topEnd = 0.dp, bottomEnd = 0.dp)
             ) {
@@ -84,7 +99,7 @@ fun HomeScreen(
                         scope.launch {
                             drawerState.close()
                         }
-                        viewModel.logout(onLogout)
+                        homeViewModel.logout(onLogout)
                     },
                     onCloseDrawer = {
                         scope.launch {
@@ -96,7 +111,6 @@ fun HomeScreen(
             }
         },
         scrimColor = Color.Black.copy(alpha = 0.5f)
-        // 2. REMOVED: drawerShape = RoundedCornerShape(...)
     ) {
         Scaffold(
             bottomBar = {
@@ -109,7 +123,7 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues) // <--- ADD THIS LINE
+                    .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
             ) {
                 // Header con gradiente
@@ -120,14 +134,20 @@ fun HomeScreen(
                             drawerState.open()
                         }
                     },
+                    /*
                     onNotificationClick = {
                         // TODO: Navegar a notificaciones cuando esté implementado
                     },
-                    onRefreshClick = { viewModel.refresh() }
+                    */
+                    onRefreshClick = { homeViewModel.refresh() }
                 )
 
-                // Current Appointment
-                CurrentAppointmentCard(
+                // Current Plan (reemplaza Current Appointment)
+                CurrentPlanCard(
+                    payment = paymentUiState.payment,
+                    isLoading = paymentUiState.isLoading,
+                    onManagePlan = { navigateWithWorkshop(BottomNavItem.Payment.route) },
+                    onChangePlan = { navigateWithWorkshop(BottomNavItem.Payment.route) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -150,7 +170,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // My Requests
-                MyRequestsSection(
+                MyServicesSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -166,7 +186,9 @@ fun HomeScreen(
 private fun HomeHeader(
     userName: String?,
     onMenuClick: () -> Unit,
+    /*
     onNotificationClick: () -> Unit,
+     */
     onRefreshClick: () -> Unit
 ) {
     Box(
@@ -191,7 +213,6 @@ private fun HomeHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar circular
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
                     contentDescription = null,
@@ -199,7 +220,6 @@ private fun HomeHeader(
                     tint = Color.White
                 )
 
-                // Logo centrado
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
@@ -221,8 +241,8 @@ private fun HomeHeader(
                     )
                 }
 
-                // Iconos de acción
                 Row {
+                    /*
                     IconButton(onClick = onNotificationClick) {
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
@@ -230,6 +250,7 @@ private fun HomeHeader(
                             tint = Color.White
                         )
                     }
+                     */
                     IconButton(onClick = onMenuClick) {
                         Icon(
                             imageVector = Icons.Default.Menu,
@@ -242,7 +263,6 @@ private fun HomeHeader(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Saludo
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
@@ -268,7 +288,11 @@ private fun HomeHeader(
 }
 
 @Composable
-private fun CurrentAppointmentCard(
+private fun CurrentPlanCard(
+    payment: Payment?,
+    isLoading: Boolean,
+    onManagePlan: () -> Unit,
+    onChangePlan: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -294,13 +318,13 @@ private fun CurrentAppointmentCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.CalendarToday,
+                        imageVector = Icons.Outlined.CreditCard,
                         contentDescription = null,
                         tint = Color.Black.copy(alpha = 0.7f),
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
-                        text = "Current Appointment",
+                        text = "Current Plan",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 16.sp
@@ -309,45 +333,92 @@ private fun CurrentAppointmentCard(
                     )
                 }
 
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = payment?.subscriptionTier?.toReadableName() ?: "No active plan",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 14.sp
+                            ),
+                            color = TextPrimary
+                        )
+                        payment?.expiresAt?.let { expiresAt ->
+                            Text(
+                                text = "Expires on ${expiresAt.toLocalDate()}",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontSize = 12.sp
+                                ),
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (payment != null) {
                 Column(
-                    horizontalAlignment = Alignment.End
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "02/10/205",
+                        text = when (payment.subscriptionTier) {
+                            SubscriptionTier.FREE ->
+                                "Free access to basic tools while you explore Autonexo."
+                            SubscriptionTier.BASIC ->
+                                "Integrated payments, price catalog, service reports, up to 50 active clients."
+                            SubscriptionTier.PREMIUM ->
+                                "Multi-site management, marketing, financial reporting, unlimited clients and mechanics."
+                        },
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium,
                             fontSize = 14.sp
                         ),
-                        color = TextPrimary
+                        color = TextSecondary
                     )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(StatusDone.copy(alpha = 0.12f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.CheckCircle,
+                                    contentDescription = null,
+                                    tint = StatusDone,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Active",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = StatusDone
+                                )
+                            }
+                        }
+                    }
+                }
+            } else if (!isLoading) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "14:00",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 12.sp
+                        text = "You don't have an active subscription yet.",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 14.sp
                         ),
                         color = TextSecondary
                     )
                 }
-            }
-
-            // Detalles
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Maintenance: Tire Change",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 14.sp
-                    ),
-                    color = TextSecondary
-                )
-                Text(
-                    text = "Owner: Sergio Iglesias",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 14.sp
-                    ),
-                    color = TextSecondary
-                )
             }
 
             // Botones
@@ -356,26 +427,7 @@ private fun CurrentAppointmentCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
-                    onClick = {
-                        // TODO: Implementar chat cuando esté disponible
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonNavy
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(
-                        text = "Chat",
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Button(
-                    onClick = {
-                        // TODO: Implementar cancelar cita cuando esté disponible
-                    },
+                    onClick = onManagePlan,
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ButtonRed
@@ -383,7 +435,7 @@ private fun CurrentAppointmentCard(
                     shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(
-                        text = "Cancel",
+                        text = if (payment != null) "Manage Plan" else "View Plans",
                         color = Color.White,
                         fontWeight = FontWeight.Medium
                     )
@@ -392,6 +444,13 @@ private fun CurrentAppointmentCard(
         }
     }
 }
+
+private fun SubscriptionTier.toReadableName(): String =
+    when (this) {
+        SubscriptionTier.FREE -> "Free Plan"
+        SubscriptionTier.BASIC -> "Basic Plan"
+        SubscriptionTier.PREMIUM -> "Premium Plan"
+    }
 
 @Composable
 private fun MiWorkshopCard(
@@ -413,12 +472,17 @@ private fun MiWorkshopCard(
                 .padding(16.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = Icons.Outlined.CarRepair,
+                    contentDescription = null,
+                    tint = Color.Black.copy(alpha = 0.7f),
+                    modifier = Modifier.size(24.dp)
+                )
                 Text(
-                    text = "Mi Workshop",
+                    text = "My Workshop",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
@@ -434,65 +498,163 @@ private fun MiWorkshopCard(
 
             if (hasWorkshop && workshop != null) {
                 val workshopData = workshop
-                Column {
-                    Text(
-                        text = workshopData.name,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
-                        ),
-                        color = TextPrimary
-                    )
-                    if (workshopData.shortDescription != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = workshopData.shortDescription,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 14.sp
-                            ),
-                            color = TextSecondary
-                        )
+                val rating = workshopData.trustScore ?: 0f
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = workshopData.name,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp
+                                ),
+                                color = TextPrimary
+                            )
+
+                            // Rating (número + estrella)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = String.format("%.1f", rating),
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 12.sp
+                                    ),
+                                    color = TextSecondary
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Rating",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = ButtonNavy
+                                )
+                            }
+
+                            if (workshopData.shortDescription != null) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = workshopData.shortDescription,
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontSize = 14.sp
+                                    ),
+                                    color = TextSecondary,
+                                    maxLines = 2
+                                )
+                            }
+                        }
+
+                        if (workshopData.logoUrl != null) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            AsyncImage(
+                                model = workshopData.logoUrl,
+                                contentDescription = "Logo del taller",
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
+
                     Spacer(modifier = Modifier.height(12.dp))
+
+                    val hasPhoto = workshopData.photoUrls.isNotEmpty()
+
+                    if (hasPhoto) {
+                        AsyncImage(
+                            model = workshopData.photoUrls.first(),
+                            contentDescription = "Foto del taller",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFE4E7EE)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Image,
+                                    contentDescription = "Sin foto",
+                                    tint = IconGray,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "No photo yet",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = TextTertiary
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Chips de info
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         AssistChip(
                             onClick = { },
-                            label = { 
+                            label = {
                                 Text(
                                     text = "${workshopData.capabilityTags.size} Tags",
                                     fontSize = 12.sp
-                                ) 
+                                )
                             }
                         )
                         if (workshopData.logoUrl != null) {
                             AssistChip(
                                 onClick = { },
-                                label = { 
+                                label = {
                                     Text(
                                         text = "Logo",
                                         fontSize = 12.sp
-                                    ) 
+                                    )
                                 }
                             )
                         }
                         if (workshopData.photoUrls.isNotEmpty()) {
                             AssistChip(
                                 onClick = { },
-                                label = { 
+                                label = {
                                     Text(
                                         text = "${workshopData.photoUrls.size} Fotos",
                                         fontSize = 12.sp
-                                    ) 
+                                    )
                                 }
                             )
                         }
                     }
+
                     Spacer(modifier = Modifier.height(12.dp))
+
                     Button(
-                        onClick = { 
+                        onClick = {
                             onNavigate("workshop/management/${workshopData.id}")
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -549,30 +711,40 @@ private fun MiWorkshopCard(
     }
 }
 
+
 @Composable
-private fun MyRequestsSection(
+private fun MyServicesSection(
     modifier: Modifier = Modifier
-) {
+)  {
     Column(
         modifier = modifier
     ) {
-        Text(
-            text = "My Requests",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            ),
-            color = TextPrimary,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Build,
+                contentDescription = null,
+                tint = Color.Black.copy(alpha = 0.7f),
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "My Services",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                ),
+                color = TextPrimary,
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            RequestCard(
+            ServiceCard(
                 status = "Pending",
                 statusColor = StatusPending,
                 serviceTitle = "Oil Change",
@@ -580,7 +752,7 @@ private fun MyRequestsSection(
                 isPending = true
             )
 
-            RequestCard(
+            ServiceCard(
                 status = "Done",
                 statusColor = StatusDone,
                 serviceTitle = "Changing Air Filters",
@@ -588,7 +760,7 @@ private fun MyRequestsSection(
                 isPending = false
             )
 
-            RequestCard(
+            ServiceCard(
                 status = "Pending",
                 statusColor = StatusPending,
                 serviceTitle = "Brake Service",
@@ -600,7 +772,7 @@ private fun MyRequestsSection(
 }
 
 @Composable
-private fun RequestCard(
+private fun ServiceCard(
     status: String,
     statusColor: Color,
     serviceTitle: String,
@@ -620,7 +792,6 @@ private fun RequestCard(
                 .fillMaxSize()
                 .padding(12.dp)
         ) {
-
             Surface(
                 color = statusColor.copy(alpha = 0.2f),
                 shape = RoundedCornerShape(8.dp),
@@ -708,7 +879,6 @@ private fun RequestCard(
     }
 }
 
-
 private val DrawerBackground = Color(0xFF1E1E1E)
 private val DrawerHeaderTop = Color(0xFF1E2B36)
 private val DrawerHeaderBottom = Color(0xFF253442)
@@ -728,7 +898,6 @@ fun NavigationDrawerContent(
             .background(DrawerBackground)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header con gradiente y logo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -739,7 +908,6 @@ fun NavigationDrawerContent(
                 )
                 .padding(top = 32.dp, bottom = 24.dp)
         ) {
-
             IconButton(
                 onClick = onCloseDrawer,
                 modifier = Modifier
@@ -753,8 +921,6 @@ fun NavigationDrawerContent(
                     modifier = Modifier.size(24.dp)
                 )
             }
-
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

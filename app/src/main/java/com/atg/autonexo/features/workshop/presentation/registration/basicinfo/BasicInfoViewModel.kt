@@ -86,7 +86,7 @@ class BasicInfoViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
             
-            // Obtener el usuario autenticado primero
+
             getCurrentUserUseCase()
                 .onSuccess { user ->
                     val request = CreateWorkshopRequest(
@@ -122,30 +122,6 @@ class BasicInfoViewModel @Inject constructor(
         }
     }
 
-    fun continueWithCurrentOrOriginal(onNext: (Long) -> Unit) {
-        val state = _uiState.value
-
-        val effectiveName = state.name.ifBlank { state.ogName }
-        val effectiveShort = state.shortDescription.ifBlank { state.ogShortDescription }
-        val effectiveLegal = state.legalName.ifBlank { state.ogLegalName }
-        val effectiveRuc = state.ruc.ifBlank { state.ogRuc }
-
-        if (effectiveName.isBlank()) {
-            _uiState.value = state.copy(errorMessage = "El nombre es requerido")
-            return
-        }
-
-        val newState = state.copy(
-            name = effectiveName,
-            shortDescription = effectiveShort,
-            legalName = effectiveLegal,
-            ruc = effectiveRuc
-        )
-        _uiState.value = newState
-
-        onNext(newState.workshopId ?: 0L)
-    }
-
     fun checkExistingWorkshop(onWorkshopExists: (workshopId: Long) -> Unit, onNoWorkshop: () -> Unit) {
         viewModelScope.launch {
             getMyWorkshopUseCase()
@@ -169,7 +145,12 @@ class BasicInfoViewModel @Inject constructor(
                         ogLegalName = workshop.legalName ?: "",
                         ogShortDescription = workshop.shortDescription ?: "",
                         workshopId = workshop.id,
-                        workshop = workshop
+                        workshop = workshop,
+
+                        name = workshop.name,
+                        ruc = workshop.ruc ?: "",
+                        legalName = workshop.legalName ?: "",
+                        shortDescription = workshop.shortDescription ?: ""
                     )
                 }
                 .onFailure { exception ->
@@ -189,12 +170,12 @@ class BasicInfoViewModel @Inject constructor(
             return
         }
 
-        // Valores efectivos: lo nuevo si hay, sino lo original
+
         val effectiveName = state.name.ifBlank { state.ogName }
         val effectiveShort = state.shortDescription.ifBlank { state.ogShortDescription }
         val effectiveLegal = state.legalName.ifBlank { state.ogLegalName }
 
-        // Validaciones rápidas
+
         if (effectiveName.isBlank()) {
             _uiState.value = state.copy(errorMessage = "El nombre es requerido")
             return
