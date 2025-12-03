@@ -20,8 +20,11 @@ import com.atg.autonexo.features.workshop.presentation.invitation.InviteEmployee
 import com.atg.autonexo.features.workshop.presentation.invitation.AcceptInvitationScreen
 import com.atg.autonexo.features.workshop.presentation.invitation.InvitationCodeDisplayScreen
 import com.atg.autonexo.features.home.presentation.home.HomeScreen
+import com.atg.autonexo.features.matching.presentation.requests.RequestsScreen
 import com.atg.autonexo.features.payment.presentation.payment.PaymentScreen
-
+import com.atg.autonexo.features.profile.presentation.ProfileScreen
+import com.atg.autonexo.features.profile.presentation.editprofile.EditProfileScreen
+import com.atg.autonexo.features.profile.presentation.newpassword.NewPasswordScreen
 
 @Composable
 fun AppNavigation(
@@ -159,17 +162,54 @@ fun AppNavigation(
                 }
             )
         }
-        
-        composable(Route.HomeNav.Profile.route) {
-            HomeScreen(
-                currentRoute = Route.HomeNav.Profile.route,
+
+        composable(Route.HomeNav.Requests.route){
+            RequestsScreen(
+                currentRoute = Route.HomeNav.Requests.route,
                 onNavigate = { route ->
                     navController.navigate(route)
+                }
+            )
+        }
+
+        composable(Route.HomeNav.Profile.route) {
+            ProfileScreen(
+                onBack = {
+                    navController.popBackStack()
                 },
-                onLogout = {
-                    navController.navigate(Route.Auth.Login.route) {
-                        popUpTo(Route.Home.route) { inclusive = true }
-                    }
+                onEditProfile = {
+                    navController.navigate(Route.Profile.EditProfile.route)
+                },
+                onEditWorkshop = {
+                    // TODO: Navegar a EditWorkshopScreen cuando esté implementada
+                    // navController.navigate(Route.Workshop.EditWorkshop.route)
+                }
+            )
+        }
+
+        // Profile Edit
+        composable(Route.Profile.EditProfile.route) {
+            EditProfileScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onChangePassword = {
+                    navController.navigate(Route.Profile.NewPassword.route)
+                },
+                onSaveSuccess = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // New Password
+        composable(Route.Profile.NewPassword.route) {
+            NewPasswordScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onPasswordChanged = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -311,7 +351,12 @@ fun AppNavigation(
             )
         ) { backStackEntry ->
             val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
-            PaymentScreen(workshopId = workshopId)
+            PaymentScreen(
+                workshopId = workshopId,
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
     }

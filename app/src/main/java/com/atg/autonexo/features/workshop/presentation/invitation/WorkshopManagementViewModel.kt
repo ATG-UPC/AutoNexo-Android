@@ -7,7 +7,9 @@ import com.atg.autonexo.features.workshop.domain.usecases.ActivateEmployeeUseCas
 import com.atg.autonexo.features.workshop.domain.usecases.CreateInvitationUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.DeactivateEmployeeUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetInvitationsUseCase
+import com.atg.autonexo.features.workshop.domain.usecases.GetMyWorkshopUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetWorkshopEmployeesUseCase
+import com.atg.autonexo.features.workshop.domain.usecases.GetWorkshopLocationsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +23,9 @@ class WorkshopManagementViewModel @Inject constructor(
     private val getInvitationsUseCase: GetInvitationsUseCase,
     private val getWorkshopEmployeesUseCase: GetWorkshopEmployeesUseCase,
     private val deactivateEmployeeUseCase: DeactivateEmployeeUseCase,
-    private val activateEmployeeUseCase: ActivateEmployeeUseCase
+    private val activateEmployeeUseCase: ActivateEmployeeUseCase,
+    private val getMyWorkshopsUseCase: GetMyWorkshopUseCase,
+    private val getWorkshopLocationsUseCase: GetWorkshopLocationsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkshopManagementUiState())
@@ -123,6 +127,72 @@ class WorkshopManagementViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    suspend fun loadWorkshop(){
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLodingWorkshop = true,
+                errorMessage = null
+            )
+        }
+        getMyWorkshopsUseCase()
+            .onSuccess { workshop ->
+            val tags = workshop.capabilityTags
+            val workshopName = workshop.name
+            val workshopShortDescription = workshop.shortDescription ?: ""
+            val photoUrls = workshop.photoUrls
+            val logoUrl = workshop.logoUrl ?: ""
+            val trustScore = workshop.trustScore
+                _uiState.value = _uiState.value.copy(
+                    isLodingWorkshop = false,
+                    capabilityTags = tags,
+                    workshopName = workshopName,
+                    workshopShortDescription = workshopShortDescription,
+                    photoUrls = photoUrls,
+                    logoUrl = logoUrl,
+                    trustScore = trustScore,
+                    errorMessage = null
+                )
+            }
+            .onFailure { exception ->
+                _uiState.value = _uiState.value.copy(
+                    isLodingWorkshop = false,
+                    errorMessage = exception.message ?: "Error al cargar tags"
+                )
+            }
+
+    }
+
+    suspend fun loadLocation(workShopId: Long){
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                errorMessage = null
+            )
+        }
+        getWorkshopLocationsUseCase(workShopId)
+            .onSuccess { locations ->
+                val first = locations.firstOrNull()
+
+                if (first != null) {
+                    _uiState.value = _uiState.value.copy(
+                        street = first.street,
+                        city = first.city,
+                        state = first.state,
+                        zip = first.zip,
+                        errorMessage = null
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = "No se encontró ubicación para el taller"
+                    )
+                }
+            }
+            .onFailure { exception ->
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = exception.message ?: "Error al cargar ubicación"
+                )
+            }
     }
 
     fun refreshInvitationCode(workshopId: Long) {

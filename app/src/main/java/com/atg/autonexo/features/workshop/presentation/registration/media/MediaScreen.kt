@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,19 +31,28 @@ fun MediaScreen(
     onNext: (workshopId: Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
+
+
     val logoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { viewModel.setLogo(it) }
     }
-    
+
+
     val photosPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
-        uris.take(10 - uiState.photoUris.size).forEach { uri ->
-            viewModel.addPhoto(uri)
+        val remainingSlots = 10 - (uiState.photoUrls.size + uiState.photoUris.size)
+        if (remainingSlots > 0) {
+            uris.take(remainingSlots).forEach { uri ->
+                viewModel.addPhoto(uri)
+            }
         }
+    }
+
+    LaunchedEffect(workshopId) {
+        viewModel.loadWorkshopMedia()
     }
 
     Column(
@@ -57,51 +67,59 @@ fun MediaScreen(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Logo Section
         Text(
             text = "Logo (Opcional)",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
-        if (uiState.logoUri != null) {
+
+        val logoModel: Any? = uiState.logoUri ?: uiState.logoUrl
+        val hasLogo = logoModel != null
+
+        if (hasLogo) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 AsyncImage(
-                    model = uiState.logoUri,
+                    model = logoModel,
                     contentDescription = "Logo",
                     modifier = Modifier
                         .size(200.dp)
                         .align(Alignment.Center),
                     contentScale = ContentScale.Fit
                 )
-                IconButton(
-                    onClick = { viewModel.removeLogo() },
-                    modifier = Modifier.align(Alignment.TopEnd)
-                ) {
-                    Icon(Icons.Default.Close, "Eliminar logo")
+
+                if (uiState.logoUri != null) {
+                    IconButton(
+                        onClick = { viewModel.removeLogo() },
+                        modifier = Modifier.align(Alignment.TopEnd)
+                    ) {
+                        Icon(Icons.Default.Close, "Eliminar logo")
+                    }
                 }
             }
-        } else {
-            OutlinedButton(
-                onClick = { logoPickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Seleccionar Logo")
-            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        OutlinedButton(
+            onClick = { logoPickerLauncher.launch("image/*") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(if (hasLogo) "Cambiar Logo" else "Seleccionar Logo")
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Photos Section
         Text(
             text = "Fotos (Máximo 10, Opcional)",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
-        
-        if (uiState.photoUris.size < 10) {
+
+        val totalPhotos = uiState.photoUrls.size + uiState.photoUris.size
+
+        if (totalPhotos < 10) {
             OutlinedButton(
                 onClick = { photosPickerLauncher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
@@ -114,20 +132,58 @@ fun MediaScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (uiState.photoUris.isNotEmpty()) {
-            val rows = (uiState.photoUris.size + 1) / 2
-            val gridHeight = (rows * 150).dp
+        if (uiState.photoUrls.isNotEmpty()) {
+            Text(
+                text = "Fotos actuales",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            val rowsExisting = (uiState.photoUrls.size + 1) / 2
+            val gridHeightExisting = (rowsExisting * 150).dp
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.height(gridHeight)
+                modifier = Modifier.height(gridHeightExisting)
+            ) {
+                itemsIndexed(uiState.photoUrls) { index, url ->
+                    AsyncImage(
+                        model = url,
+                        contentDescription = "Foto actual $index",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (uiState.photoUris.isNotEmpty()) {
+            Text(
+                text = "Nuevas fotos",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            val rowsNew = (uiState.photoUris.size + 1) / 2
+            val gridHeightNew = (rowsNew * 150).dp
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.height(gridHeightNew)
             ) {
                 itemsIndexed(uiState.photoUris) { index, uri ->
                     Box {
                         AsyncImage(
                             model = uri,
-                            contentDescription = "Foto $index",
+                            contentDescription = "Foto nueva $index",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(150.dp),
@@ -170,4 +226,3 @@ fun MediaScreen(
         }
     }
 }
-

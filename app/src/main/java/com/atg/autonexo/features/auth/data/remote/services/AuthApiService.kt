@@ -1,16 +1,19 @@
 package com.atg.autonexo.features.auth.data.remote.services
 
+import com.atg.autonexo.features.auth.data.remote.models.ChangePasswordRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.ForgotPasswordRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.ResendVerificationRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.ResetPasswordRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.SignInRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.SignInResponseDto
 import com.atg.autonexo.features.auth.data.remote.models.SignUpRequestDto
+import com.atg.autonexo.features.auth.data.remote.models.UpdateProfileRequestDto
 import com.atg.autonexo.features.auth.data.remote.models.VerifyEmailRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 
 interface AuthApiService {
     
@@ -37,5 +40,11 @@ interface AuthApiService {
     
     @GET("api/v1/users/me")
     suspend fun getCurrentUser(): Response<com.atg.autonexo.features.auth.data.remote.models.UserDto>
+    
+    @PUT("api/v1/users/me")
+    suspend fun updateProfile(@Body request: UpdateProfileRequestDto): Response<com.atg.autonexo.features.auth.data.remote.models.UserDto>
+    
+    @PUT("api/v1/users/me/password")
+    suspend fun changePassword(@Body request: ChangePasswordRequestDto): Response<String>
 }
 

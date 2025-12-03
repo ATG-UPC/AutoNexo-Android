@@ -37,6 +37,10 @@ sealed class Route(val route: String) {
         object AcceptInvitation : Route("workshop/invitation/accept")
     }
 
+    object Matching {
+        object Request : Route("matching/request")
+    }
+
     // Payment Navigation Routes
     object Payment{
         object PaymentScreen : Route("payment/subscription"){
@@ -49,11 +53,18 @@ sealed class Route(val route: String) {
         }
     }
 
+
     // Home Navigation Routes
     object HomeNav {
         object Requests : Route("home/requests")
         object Services : Route("home/services")
         object Profile : Route("home/profile")
+    }
+
+    // Profile Navigation Routes
+    object Profile {
+        object EditProfile : Route("profile/edit")
+        object NewPassword : Route("profile/new_password")
     }
 }
 

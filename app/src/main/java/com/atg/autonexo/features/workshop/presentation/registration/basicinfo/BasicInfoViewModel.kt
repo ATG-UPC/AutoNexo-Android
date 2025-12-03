@@ -6,6 +6,7 @@ import com.atg.autonexo.features.auth.domain.usecases.GetCurrentUserUseCase
 import com.atg.autonexo.features.workshop.domain.models.CreateWorkshopRequest
 import com.atg.autonexo.features.workshop.domain.usecases.CreateWorkshopUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetMyWorkshopUseCase
+import com.atg.autonexo.features.workshop.domain.usecases.UpdateWorkshopUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +18,11 @@ import javax.inject.Inject
 class BasicInfoViewModel @Inject constructor(
     private val createWorkshopUseCase: CreateWorkshopUseCase,
     private val getMyWorkshopUseCase: GetMyWorkshopUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val updateWorkshopUseCase: UpdateWorkshopUseCase
 ) : ViewModel() {
+
+
 
     private val _uiState = MutableStateFlow(BasicInfoUiState())
     val uiState: StateFlow<BasicInfoUiState> = _uiState.asStateFlow()
@@ -82,7 +86,7 @@ class BasicInfoViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = currentState.copy(isLoading = true, errorMessage = null)
             
-            // Obtener el usuario autenticado primero
+
             getCurrentUserUseCase()
                 .onSuccess { user ->
                     val request = CreateWorkshopRequest(
@@ -130,5 +134,100 @@ class BasicInfoViewModel @Inject constructor(
                 }
         }
     }
+
+    fun loadMyWorkshop() {
+        viewModelScope.launch {
+            getMyWorkshopUseCase()
+                .onSuccess { workshop ->
+                    _uiState.value = _uiState.value.copy(
+                        ogName = workshop.name,
+                        ogRuc = workshop.ruc ?: "",
+                        ogLegalName = workshop.legalName ?: "",
+                        ogShortDescription = workshop.shortDescription ?: "",
+                        workshopId = workshop.id,
+                        workshop = workshop,
+
+                        name = workshop.name,
+                        ruc = workshop.ruc ?: "",
+                        legalName = workshop.legalName ?: "",
+                        shortDescription = workshop.shortDescription ?: ""
+                    )
+                }
+                .onFailure { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = exception.message ?: "Error al obtener workshop"
+                    )
+                }
+        }
+    }
+
+    fun saveEdits(onSuccess: (Long) -> Unit) {
+        val state = _uiState.value
+        val original = state.workshop
+
+        if (original == null) {
+            _uiState.value = state.copy(errorMessage = "No se encontró el workshop a actualizar")
+            return
+        }
+
+
+        val effectiveName = state.name.ifBlank { state.ogName }
+        val effectiveShort = state.shortDescription.ifBlank { state.ogShortDescription }
+        val effectiveLegal = state.legalName.ifBlank { state.ogLegalName }
+
+
+        if (effectiveName.isBlank()) {
+            _uiState.value = state.copy(errorMessage = "El nombre es requerido")
+            return
+        }
+        if (effectiveName.length !in 3..200) {
+            _uiState.value = state.copy(errorMessage = "El nombre debe tener entre 3 y 200 caracteres")
+            return
+        }
+        if (effectiveShort.length > 500) {
+            _uiState.value = state.copy(errorMessage = "La descripción corta no puede exceder 500 caracteres")
+            return
+        }
+        if (effectiveLegal.length > 300) {
+            _uiState.value = state.copy(errorMessage = "El nombre legal no puede exceder 300 caracteres")
+            return
+        }
+
+        val updatedWorkshop = original.copy(
+            name = effectiveName,
+            shortDescription = effectiveShort.ifBlank { null },
+            legalName = effectiveLegal.ifBlank { null },
+            // los demás campos se mantienen igual
+        )
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(isLoading = true, errorMessage = null)
+
+            updateWorkshopUseCase(updatedWorkshop)
+                .onSuccess { updated ->
+                    _uiState.value = state.copy(
+                        isLoading = false,
+                        isSuccess = true,
+                        ogName = updated.name,
+                        ogShortDescription = updated.shortDescription ?: "",
+                        ogLegalName = updated.legalName ?: "",
+                        ruc = "",
+                        name = "",
+                        shortDescription = "",
+                        legalName = "",
+                        workshopId = updated.id,
+                        workshop = updated
+                    )
+                    onSuccess(updated.id)
+                }
+                .onFailure { e ->
+                    _uiState.value = state.copy(
+                        isLoading = false,
+                        errorMessage = e.message ?: "Error al actualizar workshop"
+                    )
+                }
+        }
+    }
+
 }
 

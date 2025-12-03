@@ -7,6 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,10 +19,15 @@ import com.atg.autonexo.features.workshop.domain.models.TagCategory
 @Composable
 fun TagsScreen(
     workshopId: Long,
+    initialSelectedTagCodes: Set<String> = emptySet(),
     viewModel: TagsViewModel = hiltViewModel(),
     onNext: (workshopId: Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(initialSelectedTagCodes) {
+        viewModel.loadWorkshopTags()
+    }
 
     Column(
         modifier = Modifier

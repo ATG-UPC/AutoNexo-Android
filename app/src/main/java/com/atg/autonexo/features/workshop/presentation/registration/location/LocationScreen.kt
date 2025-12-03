@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,29 +29,30 @@ fun LocationScreen(
     onFinish: (workshopName: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
-    // Ubicación por defecto (Lima, Perú)
+
+    val showLabel = uiState.ogState.isBlank() &&
+            uiState.ogCity.isBlank() &&
+            uiState.ogStreet.isBlank() &&
+            uiState.ogCountry.isBlank()
+            && !uiState.isLoading
+
     val defaultLocation = LatLng(-12.0464, -77.0428)
     val initialLocation = uiState.selectedLocation ?: defaultLocation
-    
-    // Inicializar la ubicación por defecto si no hay una seleccionada
-    LaunchedEffect(Unit) {
-        if (uiState.selectedLocation == null) {
-            viewModel.updateLocation(defaultLocation)
-        }
-    }
-    
+
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(initialLocation, 15f)
     }
-    
-    // Actualizar la cámara cuando cambia la ubicación seleccionada
+
     LaunchedEffect(uiState.selectedLocation) {
         uiState.selectedLocation?.let { location ->
             cameraPositionState.animate(
                 update = CameraUpdateFactory.newLatLngZoom(location, 15f)
             )
         }
+    }
+
+    LaunchedEffect(workshopId) {
+        viewModel.loadWorkshopLocation(workshopId)
     }
 
     Column(
@@ -64,7 +67,6 @@ fun LocationScreen(
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Google Map con manejo de errores
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,9 +99,11 @@ fun LocationScreen(
                     )
                 }
             }
-            
-            // Mostrar mensaje si no hay ubicación seleccionada
-            if (uiState.selectedLocation == null) {
+
+            if (uiState.selectedLocation == null &&
+                uiState.ogLatitude == null &&
+                uiState.ogLongitude == null
+            ) {
                 Card(
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -123,7 +127,27 @@ fun LocationScreen(
         OutlinedTextField(
             value = uiState.street,
             onValueChange = viewModel::updateStreet,
-            label = { Text("Calle *") },
+            trailingIcon = {
+                if (!showLabel) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar calle",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if (showLabel) {
+                    Text("Calle *")
+                } else {
+                    Text("Editar Calle del Workshop")
+                }
+            },
+            placeholder = {
+                if (!showLabel && uiState.ogStreet.isNotBlank()) {
+                    Text(uiState.ogStreet)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading
@@ -134,7 +158,27 @@ fun LocationScreen(
         OutlinedTextField(
             value = uiState.city,
             onValueChange = viewModel::updateCity,
-            label = { Text("Ciudad *") },
+            trailingIcon = {
+                if (!showLabel) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar ciudad",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if (showLabel) {
+                    Text("Ciudad *")
+                } else {
+                    Text("Editar Ciudad")
+                }
+            },
+            placeholder = {
+                if (!showLabel && uiState.ogCity.isNotBlank()) {
+                    Text(uiState.ogCity)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading
@@ -145,7 +189,27 @@ fun LocationScreen(
         OutlinedTextField(
             value = uiState.state,
             onValueChange = viewModel::updateState,
-            label = { Text("Estado/Provincia *") },
+            trailingIcon = {
+                if (!showLabel) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar estado/provincia",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if (showLabel) {
+                    Text("Estado/Provincia *")
+                } else {
+                    Text("Editar Estado/Provincia")
+                }
+            },
+            placeholder = {
+                if (!showLabel && uiState.ogState.isNotBlank()) {
+                    Text(uiState.ogState)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading
@@ -154,9 +218,29 @@ fun LocationScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = uiState.zip,
+            value = uiState.zip.orEmpty(),
             onValueChange = viewModel::updateZip,
-            label = { Text("Código Postal") },
+            trailingIcon = {
+                if (!showLabel && !uiState.ogZip.isNullOrBlank()) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar código postal",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if (showLabel) {
+                    Text("Código Postal")
+                } else {
+                    Text("Editar Código Postal")
+                }
+            },
+            placeholder = {
+                if (!showLabel && !uiState.ogZip.isNullOrBlank()) {
+                    Text(uiState.ogZip!!)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading
@@ -167,7 +251,27 @@ fun LocationScreen(
         OutlinedTextField(
             value = uiState.country,
             onValueChange = viewModel::updateCountry,
-            label = { Text("País *") },
+            trailingIcon = {
+                if (!showLabel) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar país",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            },
+            label = {
+                if (showLabel) {
+                    Text("País *")
+                } else {
+                    Text("Editar País")
+                }
+            },
+            placeholder = {
+                if (!showLabel && uiState.ogCountry.isNotBlank()) {
+                    Text(uiState.ogCountry)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             enabled = !uiState.isLoading
@@ -183,19 +287,27 @@ fun LocationScreen(
             )
         }
 
+        val hasStreet  = uiState.street.isNotBlank()  || uiState.ogStreet.isNotBlank()
+        val hasCity    = uiState.city.isNotBlank()    || uiState.ogCity.isNotBlank()
+        val hasState   = uiState.state.isNotBlank()   || uiState.ogState.isNotBlank()
+        val hasCountry = uiState.country.isNotBlank() || uiState.ogCountry.isNotBlank()
+        val hasCoords  =
+            uiState.selectedLocation != null ||
+                    (uiState.ogLatitude != null && uiState.ogLongitude != null)
+
         Button(
-            onClick = { 
-                viewModel.addLocation(workshopId) { workshopName ->
+            onClick = {
+                viewModel.saveLocation(workshopId) { workshopName ->
                     onFinish(workshopName)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading &&
-                     uiState.street.isNotBlank() &&
-                     uiState.city.isNotBlank() &&
-                     uiState.state.isNotBlank() &&
-                     uiState.country.isNotBlank() &&
-                     uiState.selectedLocation != null
+                    hasStreet &&
+                    hasCity &&
+                    hasState &&
+                    hasCountry &&
+                    hasCoords
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
@@ -208,4 +320,3 @@ fun LocationScreen(
         }
     }
 }
-
