@@ -17,6 +17,7 @@ import retrofit2.HttpException
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 class BookingRepositoryImpl @Inject constructor(
@@ -124,7 +125,6 @@ class BookingRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-
 
     private fun parseError(response: retrofit2.Response<*>, defaultMessage: String): String {
         val errorBodyString = try {
