@@ -283,7 +283,7 @@ private fun CurrentAppointmentCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header con título y fecha
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -566,14 +566,12 @@ private fun MyRequestsSection(
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        // Lista horizontal de requests
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Request Card - Pending
             RequestCard(
                 status = "Pending",
                 statusColor = StatusPending,
@@ -582,7 +580,6 @@ private fun MyRequestsSection(
                 isPending = true
             )
 
-            // Request Card - Done
             RequestCard(
                 status = "Done",
                 statusColor = StatusDone,
@@ -591,7 +588,6 @@ private fun MyRequestsSection(
                 isPending = false
             )
 
-            // Request Card - Pending (ejemplo adicional)
             RequestCard(
                 status = "Pending",
                 statusColor = StatusPending,
@@ -624,7 +620,7 @@ private fun RequestCard(
                 .fillMaxSize()
                 .padding(12.dp)
         ) {
-            // Status badge top-left
+
             Surface(
                 color = statusColor.copy(alpha = 0.2f),
                 shape = RoundedCornerShape(8.dp),
@@ -652,7 +648,6 @@ private fun RequestCard(
                 }
             }
 
-            // Brand sticker top-right (placeholder)
             Surface(
                 color = Color(0xFFF5F5F5),
                 shape = RoundedCornerShape(8.dp),
@@ -673,7 +668,6 @@ private fun RequestCard(
                 }
             }
 
-            // Car + wrench icon center
             Column(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -688,7 +682,6 @@ private fun RequestCard(
                 )
             }
 
-            // Footer con información
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -715,7 +708,7 @@ private fun RequestCard(
     }
 }
 
-// Colores del drawer
+
 private val DrawerBackground = Color(0xFF1E1E1E)
 private val DrawerHeaderTop = Color(0xFF1E2B36)
 private val DrawerHeaderBottom = Color(0xFF253442)
@@ -746,7 +739,7 @@ fun NavigationDrawerContent(
                 )
                 .padding(top = 32.dp, bottom = 24.dp)
         ) {
-            // Botón de cierre (X) arriba a la derecha
+
             IconButton(
                 onClick = onCloseDrawer,
                 modifier = Modifier
@@ -761,14 +754,13 @@ fun NavigationDrawerContent(
                 )
             }
 
-            // Logo centrado
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Logo con "A" y "N" estilizado (simplificado)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -801,8 +793,6 @@ fun NavigationDrawerContent(
                 )
             }
         }
-
-        // Lista de opciones del menú
         SideNavigationBar(
             onNavigate = { route ->
                 onCloseDrawer()
