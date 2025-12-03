@@ -14,9 +14,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.atg.autonexo.core.components.RoundedHeader
+import com.atg.autonexo.core.ui.theme.ButtonNavy
+import com.atg.autonexo.core.ui.theme.TextTertiary
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -26,15 +30,16 @@ import com.google.maps.android.compose.*
 fun LocationScreen(
     workshopId: Long,
     viewModel: LocationViewModel = hiltViewModel(),
-    onFinish: (workshopName: String) -> Unit
+    onFinish: (workshopName: String) -> Unit,
+    onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     val showLabel = uiState.ogState.isBlank() &&
             uiState.ogCity.isBlank() &&
             uiState.ogStreet.isBlank() &&
-            uiState.ogCountry.isBlank()
-            && !uiState.isLoading
+            uiState.ogCountry.isBlank() &&
+            !uiState.isLoading
 
     val defaultLocation = LatLng(-12.0464, -77.0428)
     val initialLocation = uiState.selectedLocation ?: defaultLocation
@@ -58,242 +63,220 @@ fun LocationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "Ubicación del Workshop",
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.padding(bottom = 24.dp)
+
+        RoundedHeader(
+            title = "Ubicación",
+            onBack = onBack
         )
 
-        Box(
+        Spacer(modifier = Modifier.height(24.dp))
+
+
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp)
-                )
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                onMapClick = { latLng ->
-                    viewModel.updateLocation(latLng)
-                },
-                properties = MapProperties(
-                    mapType = MapType.NORMAL,
-                    isMyLocationEnabled = false
-                ),
-                uiSettings = MapUiSettings(
-                    zoomControlsEnabled = true,
-                    myLocationButtonEnabled = false,
-                    mapToolbarEnabled = false
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
             ) {
-                uiState.selectedLocation?.let { location ->
-                    Marker(
-                        state = MarkerState(position = location),
-                        title = "Ubicación del Workshop"
-                    )
-                }
-            }
-
-            if (uiState.selectedLocation == null &&
-                uiState.ogLatitude == null &&
-                uiState.ogLongitude == null
-            ) {
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    onMapClick = { latLng -> viewModel.updateLocation(latLng) },
+                    properties = MapProperties(
+                        mapType = MapType.NORMAL,
+                        isMyLocationEnabled = false
+                    ),
+                    uiSettings = MapUiSettings(
+                        zoomControlsEnabled = false,
+                        myLocationButtonEnabled = false,
+                        mapToolbarEnabled = false
                     )
                 ) {
-                    Text(
-                        text = "Toca el mapa para seleccionar la ubicación",
-                        modifier = Modifier.padding(16.dp),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                    uiState.selectedLocation?.let { location ->
+                        Marker(
+                            state = MarkerState(position = location),
+                            title = "Ubicación del Workshop"
+                        )
+                    }
+                }
+
+                if (uiState.selectedLocation == null &&
+                    uiState.ogLatitude == null &&
+                    uiState.ogLongitude == null
+                ) {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.85f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(24.dp)
+                    ) {
+                        Text(
+                            text = "Toca el mapa para seleccionar la ubicación",
+                            modifier = Modifier.padding(16.dp),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextTertiary
+                        )
+                    }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = uiState.street,
-            onValueChange = viewModel::updateStreet,
-            trailingIcon = {
-                if (!showLabel) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar calle",
-                        modifier = Modifier.size(18.dp)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+
+                // Calle
+                OutlinedTextField(
+                    value = uiState.street,
+                    onValueChange = viewModel::updateStreet,
+                    trailingIcon = {
+                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
+                    },
+                    label = {
+                        if (showLabel) Text("Calle *")
+                        else Text("Editar Calle del Workshop")
+                    },
+                    placeholder = {
+                        if (!showLabel && uiState.ogStreet.isNotBlank()) Text(uiState.ogStreet)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !uiState.isLoading,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
                     )
-                }
-            },
-            label = {
-                if (showLabel) {
-                    Text("Calle *")
-                } else {
-                    Text("Editar Calle del Workshop")
-                }
-            },
-            placeholder = {
-                if (!showLabel && uiState.ogStreet.isNotBlank()) {
-                    Text(uiState.ogStreet)
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading
-        )
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.city,
-            onValueChange = viewModel::updateCity,
-            trailingIcon = {
-                if (!showLabel) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar ciudad",
-                        modifier = Modifier.size(18.dp)
+                // Ciudad
+                OutlinedTextField(
+                    value = uiState.city,
+                    onValueChange = viewModel::updateCity,
+                    trailingIcon = {
+                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
+                    },
+                    label = {
+                        if (showLabel) Text("Ciudad *")
+                        else Text("Editar Ciudad")
+                    },
+                    placeholder = {
+                        if (!showLabel && uiState.ogCity.isNotBlank()) Text(uiState.ogCity)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
                     )
-                }
-            },
-            label = {
-                if (showLabel) {
-                    Text("Ciudad *")
-                } else {
-                    Text("Editar Ciudad")
-                }
-            },
-            placeholder = {
-                if (!showLabel && uiState.ogCity.isNotBlank()) {
-                    Text(uiState.ogCity)
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading
-        )
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.state,
-            onValueChange = viewModel::updateState,
-            trailingIcon = {
-                if (!showLabel) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar estado/provincia",
-                        modifier = Modifier.size(18.dp)
+                // Estado
+                OutlinedTextField(
+                    value = uiState.state,
+                    onValueChange = viewModel::updateState,
+                    trailingIcon = {
+                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
+                    },
+                    label = {
+                        if (showLabel) Text("Estado/Provincia *")
+                        else Text("Editar Estado/Provincia")
+                    },
+                    placeholder = {
+                        if (!showLabel && uiState.ogState.isNotBlank()) Text(uiState.ogState)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
                     )
-                }
-            },
-            label = {
-                if (showLabel) {
-                    Text("Estado/Provincia *")
-                } else {
-                    Text("Editar Estado/Provincia")
-                }
-            },
-            placeholder = {
-                if (!showLabel && uiState.ogState.isNotBlank()) {
-                    Text(uiState.ogState)
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading
-        )
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.zip.orEmpty(),
-            onValueChange = viewModel::updateZip,
-            trailingIcon = {
-                if (!showLabel && !uiState.ogZip.isNullOrBlank()) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar código postal",
-                        modifier = Modifier.size(18.dp)
+                // ZIP
+                OutlinedTextField(
+                    value = uiState.zip.orEmpty(),
+                    onValueChange = viewModel::updateZip,
+                    trailingIcon = {
+                        if (!showLabel && !uiState.ogZip.isNullOrBlank())
+                            Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
+                    },
+                    label = {
+                        if (showLabel) Text("Código Postal")
+                        else Text("Editar Código Postal")
+                    },
+                    placeholder = {
+                        if (!showLabel && !uiState.ogZip.isNullOrBlank()) Text(uiState.ogZip!!)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
                     )
-                }
-            },
-            label = {
-                if (showLabel) {
-                    Text("Código Postal")
-                } else {
-                    Text("Editar Código Postal")
-                }
-            },
-            placeholder = {
-                if (!showLabel && !uiState.ogZip.isNullOrBlank()) {
-                    Text(uiState.ogZip!!)
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading
-        )
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.country,
-            onValueChange = viewModel::updateCountry,
-            trailingIcon = {
-                if (!showLabel) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar país",
-                        modifier = Modifier.size(18.dp)
+                // País
+                OutlinedTextField(
+                    value = uiState.country,
+                    onValueChange = viewModel::updateCountry,
+                    trailingIcon = {
+                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
+                    },
+                    label = {
+                        if (showLabel) Text("País *")
+                        else Text("Editar País")
+                    },
+                    placeholder = {
+                        if (!showLabel && uiState.ogCountry.isNotBlank()) Text(uiState.ogCountry)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
                     )
-                }
-            },
-            label = {
-                if (showLabel) {
-                    Text("País *")
-                } else {
-                    Text("Editar País")
-                }
-            },
-            placeholder = {
-                if (!showLabel && uiState.ogCountry.isNotBlank()) {
-                    Text(uiState.ogCountry)
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            enabled = !uiState.isLoading
-        )
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        uiState.errorMessage?.let { errorMessage ->
+        uiState.errorMessage?.let { msg ->
             Text(
-                text = errorMessage,
+                text = msg,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
             )
         }
-
-        val hasStreet  = uiState.street.isNotBlank()  || uiState.ogStreet.isNotBlank()
-        val hasCity    = uiState.city.isNotBlank()    || uiState.ogCity.isNotBlank()
-        val hasState   = uiState.state.isNotBlank()   || uiState.ogState.isNotBlank()
-        val hasCountry = uiState.country.isNotBlank() || uiState.ogCountry.isNotBlank()
-        val hasCoords  =
-            uiState.selectedLocation != null ||
-                    (uiState.ogLatitude != null && uiState.ogLongitude != null)
 
         Button(
             onClick = {
@@ -301,22 +284,33 @@ fun LocationScreen(
                     onFinish(workshopName)
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             enabled = !uiState.isLoading &&
-                    hasStreet &&
-                    hasCity &&
-                    hasState &&
-                    hasCountry &&
-                    hasCoords
+                    (uiState.street.isNotBlank() || uiState.ogStreet.isNotBlank()) &&
+                    (uiState.city.isNotBlank() || uiState.ogCity.isNotBlank()) &&
+                    (uiState.state.isNotBlank() || uiState.ogState.isNotBlank()) &&
+                    (uiState.country.isNotBlank() || uiState.ogCountry.isNotBlank()) &&
+                    (uiState.selectedLocation != null ||
+                            (uiState.ogLatitude != null && uiState.ogLongitude != null)),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ButtonNavy,
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(10.dp)
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(20.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = Color.White
                 )
             } else {
                 Text("Finalizar")
             }
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
+

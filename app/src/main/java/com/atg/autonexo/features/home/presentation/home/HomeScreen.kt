@@ -45,13 +45,6 @@ private val StatusPending = Color(0xFFFFC107)
 private val StatusDone = Color(0xFF4CAF50)
 private val IconGray = Color(0xFFA7A7A7)
 
-// Colores del drawer
-private val DrawerBackground = Color(0xFF1E1E1E)
-private val DrawerHeaderTop = Color(0xFF1E2B36)
-private val DrawerHeaderBottom = Color(0xFF253442)
-private val TextWhite = Color(0xFFFFFFFF)
-private val LogoRed = Color(0xFFFF6B6B)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
