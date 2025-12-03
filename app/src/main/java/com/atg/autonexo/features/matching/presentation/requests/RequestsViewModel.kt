@@ -1,4 +1,4 @@
-package com.atg.autonexo.features.matching.presentation.request
+package com.atg.autonexo.features.matching.presentation.requests
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class RequestViewModel @Inject constructor(
-    private val getRequestUseCase: GetRequestsUseCase
+class RequestsViewModel @Inject constructor(
+    private val getRequestsUseCase: GetRequestsUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(RequestUiState())
-    val uiState: StateFlow<RequestUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(RequestsUiState())
+    val uiState: StateFlow<RequestsUiState> = _uiState.asStateFlow()
 
     init {
         loadServiceRequests()
@@ -29,7 +29,7 @@ class RequestViewModel @Inject constructor(
         )
 
         viewModelScope.launch {
-            getRequestUseCase()
+            getRequestsUseCase()
                 .onSuccess { requests ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,

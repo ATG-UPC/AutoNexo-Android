@@ -7,20 +7,18 @@ import java.time.format.DateTimeFormatter
 
 fun RequestResponseDto.toDomain(): Request {
     val createdAt = parseDateTime(this.createdAt) ?: LocalDateTime.now()
-    val cancelledAt = this.canceledAt?.let { parseDateTime(it) }
 
     return Request(
         id = id,
-        userId = userId,
         vehicleId = vehicleId,
         requestedServices = requestedServices,
         description = description,
-        latitude = latitude,
-        longitude = longitude,
-        searchRadiusKm = Int,
+        matchScore = matchScore,
+        latitude = userLocation.latitude,
+        longitude = userLocation.longitude,
+        distanceKm = distanceKm,
         status = status,
-        createdAt = createdAt,
-        cancelledAt = cancelledAt
+        createdAt = createdAt
     )
 }
 
@@ -33,5 +31,5 @@ private fun parseDateTime(dateTimeString: String): LocalDateTime? {
 }
 
 fun List<RequestResponseDto>.toDomain(): List<Request> {
-    return this.map { it.toDomain() }
+    return map { it.toDomain() }
 }

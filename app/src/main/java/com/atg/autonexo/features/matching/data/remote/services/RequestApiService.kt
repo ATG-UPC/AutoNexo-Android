@@ -6,6 +6,6 @@ import retrofit2.http.GET
 
 interface RequestApiService {
 
-    @GET("api/service-requests")
+    @GET("api/v1/workshops/my-workshop/available-requests")
     suspend fun getServiceRequests(): Response<List<RequestResponseDto>>
 }

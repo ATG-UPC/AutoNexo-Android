@@ -20,7 +20,7 @@ import com.atg.autonexo.features.workshop.presentation.invitation.InviteEmployee
 import com.atg.autonexo.features.workshop.presentation.invitation.AcceptInvitationScreen
 import com.atg.autonexo.features.workshop.presentation.invitation.InvitationCodeDisplayScreen
 import com.atg.autonexo.features.home.presentation.home.HomeScreen
-import com.atg.autonexo.features.matching.presentation.request.RequestScreen
+import com.atg.autonexo.features.matching.presentation.requests.RequestsScreen
 import com.atg.autonexo.features.payment.presentation.payment.PaymentScreen
 import com.atg.autonexo.features.profile.presentation.ProfileScreen
 import com.atg.autonexo.features.profile.presentation.editprofile.EditProfileScreen
@@ -162,7 +162,16 @@ fun AppNavigation(
                 }
             )
         }
-        
+
+        composable(Route.HomeNav.Requests.route){
+            RequestsScreen(
+                currentRoute = Route.HomeNav.Requests.route,
+                onNavigate = { route ->
+                    navController.navigate(route)
+                }
+            )
+        }
+
         composable(Route.HomeNav.Profile.route) {
             ProfileScreen(
                 onBack = {
@@ -330,11 +339,6 @@ fun AppNavigation(
                     }
                 }
             )
-        }
-
-        //Request
-        composable(Route.Matching.Request.route){
-            RequestScreen()
         }
 
         // PAYMENT

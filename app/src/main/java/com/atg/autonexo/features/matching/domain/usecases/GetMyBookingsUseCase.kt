@@ -9,14 +9,4 @@ class GetMyBookingsUseCase @Inject constructor(
 ) {
     suspend operator fun invoke() = repository.getMyBookings()
 
-    suspend fun getBookings(): Result<List<Booking>>{
-        return repository.getMyBookings().fold(
-            onSuccess = { bookings ->
-                Result.success(bookings)
-            },
-            onFailure = { exception ->
-                Result.failure(exception)
-            }
-        )
-    }
 }
