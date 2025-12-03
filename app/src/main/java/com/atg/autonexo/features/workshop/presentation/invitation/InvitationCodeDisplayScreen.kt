@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -40,7 +41,7 @@ fun InvitationCodeDisplayScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("¡Taller Creado!") }
+                title = { Text("¡Operación Exitosa!") }
             )
         }
     ) { paddingValues ->
@@ -63,106 +64,110 @@ fun InvitationCodeDisplayScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "¡Taller creado exitosamente!",
+                text = "¡Operación realizada existosamente!",
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Comparte este código con tus empleados para que se unan al taller",
+                text = "Presiona el botón para continuar navegando en la aplicación",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Código destacado
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Generando código...",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    } else if (uiState.invitationCode != null) {
-                        Text(
-                            text = "Código de Invitación",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = uiState.invitationCode!!,
-                            style = MaterialTheme.typography.displayMedium,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 4.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    } else {
-                        Text(
-                            text = "Error al generar código",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
-
-            // Botones de acción
-            if (uiState.invitationCode != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            uiState.invitationCode?.let { code ->
-                                copyToClipboard(code, context)
+            /*
+                        // Código destacado
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                if (uiState.isLoading) {
+                                    CircularProgressIndicator()
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Generando código...",
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                } else if (uiState.invitationCode != null) {
+                                    Text(
+                                        text = "Código de Invitación",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = uiState.invitationCode!!,
+                                        style = MaterialTheme.typography.displayMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 4.sp,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Error al generar código",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Copiar")
-                    }
+                        }
 
-                    Button(
-                        onClick = {
-                            uiState.invitationCode?.let { code ->
-                                shareCode(code, context)
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Botones de acción
+                        if (uiState.invitationCode != null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = {
+                                        uiState.invitationCode?.let { code ->
+                                            copyToClipboard(code, context)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Copiar")
+                                }
+
+                                Button(
+                                    onClick = {
+                                        uiState.invitationCode?.let { code ->
+                                            shareCode(code, context)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Compartir")
+                                }
                             }
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Compartir")
-                    }
-                }
-            }
+                        }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Mensaje de error
+                        Spacer(modifier = Modifier.height(32.dp))
+            */
+            /* Mensaje de error
             uiState.errorMessage?.let { error ->
                 Card(
                     colors = CardDefaults.cardColors(
@@ -178,14 +183,14 @@ fun InvitationCodeDisplayScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
-
+*/
             // Botón continuar
             Button(
                 onClick = onContinue,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading
             ) {
-                Text("Continuar al Dashboard")
+                Text("Volver al Dashboard")
             }
         }
     }
