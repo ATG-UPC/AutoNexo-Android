@@ -8,6 +8,7 @@ data class TagsUiState(
     val selectedTags: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val tagsGroupedByCategory: Map<TagCategory, List<CapabilityTag>> = emptyMap()
+    val tagsGroupedByCategory: Map<TagCategory, List<CapabilityTag>> = emptyMap(),
+    val originalSelectedTags: Set<String> = emptySet(),
 )
 
