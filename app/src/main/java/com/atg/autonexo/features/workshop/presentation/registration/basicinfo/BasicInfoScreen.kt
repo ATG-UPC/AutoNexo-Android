@@ -170,11 +170,8 @@ fun BasicInfoScreen(
 
             },
             placeholder = {
-                if(!showLabel){
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(uiState.ogLegalName)
-                        Spacer(Modifier.width(8.dp))
-                    }
+                if(!showLabel && uiState.ogLegalName.isNotBlank()){
+                    Text(uiState.ogLegalName)
                 }
             },
             modifier = Modifier.fillMaxWidth(),
