@@ -37,6 +37,12 @@ private val PlanSubtitleColor = Color(0xFF243447)
 private val PlanFeatureText = Color(0xFF1B2738)
 private val PlanButtonBorder = Color(0xFF243447)
 
+// Colores para plan seleccionado
+private val SelectedPlanGradientTop = Color(0xFF3C4E6A)
+private val SelectedPlanGradientBottom = Color(0xFF263854)
+private val SelectedButtonBackground = Color(0xFF243447)
+private val SelectedButtonText = Color(0xFFFFFFFF)
+
 enum class BillingPeriod {
     MONTHLY, ANNUAL
 }
@@ -50,6 +56,7 @@ fun PaymentScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     var billingPeriod by remember { mutableStateOf(BillingPeriod.MONTHLY) }
+    val currentTier = uiState.payment?.subscriptionTier
 
     LaunchedEffect(Unit) {
         viewModel.loadSubscription()
@@ -103,6 +110,7 @@ fun PaymentScreen(
                             "Up to 50 active clients"
                         ),
                         buttonLabel = "Join Basic",
+                        isSelected = currentTier == SubscriptionTier.BASIC,
                         onJoinClick = {
                             viewModel.updateSubscriptionTier(SubscriptionTier.BASIC)
                         }
@@ -122,6 +130,7 @@ fun PaymentScreen(
                             "Priority technical support"
                         ),
                         buttonLabel = "Join Premium",
+                        isSelected = currentTier == SubscriptionTier.PREMIUM,
                         onJoinClick = {
                             viewModel.updateSubscriptionTier(SubscriptionTier.PREMIUM)
                         }
@@ -147,7 +156,7 @@ fun PaymentScreen(
         // Error message
         uiState.errorMessage?.let { error ->
             LaunchedEffect(error) {
-                // El error se puede mostrar con un Snackbar si es necesario
+                // Mostrar Snackbar si lo necesitas
             }
         }
     }
@@ -279,8 +288,24 @@ fun PlanCard(
     price: String,
     features: List<String>,
     buttonLabel: String,
+    isSelected: Boolean,
     onJoinClick: () -> Unit
 ) {
+    val gradientColors = if (isSelected) {
+        listOf(SelectedPlanGradientTop, SelectedPlanGradientBottom)
+    } else {
+        listOf(PlanGradientTop, PlanGradientBottom)
+    }
+
+    val effectiveButtonLabel = if (isSelected) "Selected" else buttonLabel
+
+    // Colores de texto según selección
+    val titleColor = if (isSelected) Color.White else PlanTitleColor
+    val subtitleColor = if (isSelected) Color.White else PlanSubtitleColor
+    val priceColor = if (isSelected) Color.White else Color.Black
+    val featureTextColor = if (isSelected) Color.White else PlanFeatureText
+    val checkIconTint = if (isSelected) Color.White else Color(0xFF1E2B36)
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(24.dp),
@@ -294,7 +319,7 @@ fun PlanCard(
                 .fillMaxWidth()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(PlanGradientTop, PlanGradientBottom)
+                        colors = gradientColors
                     )
                 )
                 .padding(24.dp)
@@ -310,7 +335,7 @@ fun PlanCard(
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp
                     ),
-                    color = PlanTitleColor
+                    color = titleColor
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -322,7 +347,7 @@ fun PlanCard(
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     ),
-                    color = PlanSubtitleColor
+                    color = subtitleColor
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -334,38 +359,48 @@ fun PlanCard(
                         fontWeight = FontWeight.Bold,
                         fontSize = 42.sp
                     ),
-                    color = Color.Black
+                    color = priceColor
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Lista de beneficios
                 features.forEach { feature ->
-                    FeatureItem(feature)
+                    FeatureItem(
+                        text = feature,
+                        textColor = featureTextColor,
+                        iconTint = checkIconTint
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // The Button with the fixed Border
+                // Botón: cambia estilo si está seleccionado
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
-                        // FIX IS HERE: Add 'width = 1.dp'
-                        .border(width = 1.dp, color = PlanButtonBorder, shape = RoundedCornerShape(50))
+                        .border(
+                            width = 1.dp,
+                            color = PlanButtonBorder,
+                            shape = RoundedCornerShape(50)
+                        )
                         .clip(RoundedCornerShape(50))
+                        .background(
+                            if (isSelected) SelectedButtonBackground else Color.Transparent
+                        )
                         .clickable { onJoinClick() }
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = buttonLabel,
+                        text = effectiveButtonLabel,
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         ),
-                        color = PlanButtonBorder
+                        color = if (isSelected) SelectedButtonText else PlanButtonBorder
                     )
                 }
             }
@@ -373,21 +408,24 @@ fun PlanCard(
     }
 }
 
-// You are also likely missing the FeatureItem composable in the truncated part
 @Composable
-fun FeatureItem(text: String) {
+fun FeatureItem(
+    text: String,
+    textColor: Color = PlanFeatureText,
+    iconTint: Color = Color(0xFF1E2B36)
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = Icons.Default.Check,
             contentDescription = null,
-            tint = Color(0xFF1E2B36),
+            tint = iconTint,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF1B2738)
+            color = textColor
         )
     }
 }
