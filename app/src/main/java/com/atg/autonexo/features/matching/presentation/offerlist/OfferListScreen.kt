@@ -2,18 +2,22 @@ package com.atg.autonexo.features.matching.presentation.offerlist
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,10 +25,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,7 +47,6 @@ import com.atg.autonexo.features.matching.domain.models.Offer
 import com.atg.autonexo.features.matching.domain.models.OfferStatus
 import java.time.format.DateTimeFormatter
 import java.math.BigDecimal
-import kotlin.math.roundToInt
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -55,7 +60,7 @@ fun OfferListScreen(
 
     val formatterDateTime = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
-    // Agrupar ofertas por estado (asegúrate que OfferStatus tenga los casos que usas)
+    // Agrupar ofertas por estado
     val grouped = uiState.offers.groupBy { it.status }
 
     val statusOrder = listOf(
@@ -80,7 +85,7 @@ fun OfferListScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // Top summary: total offers
+            // total offers
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,21 +150,16 @@ fun OfferListScreen(
                             .padding(bottom = padding.calculateBottomPadding())
                     ) {
                         // Iterar en el orden definido
-                        items(statusOrder) { status ->
+                        items(
+                            items = statusOrder,
+                            key = { it.name }
+                        ) { status ->
                             val offersForStatus = grouped[status].orEmpty()
                             StatusGroup(
                                 status = status,
                                 count = offersForStatus.size,
                                 offers = offersForStatus,
-                                onWithdraw = { offerId ->
-                                    // Llama a la acción del viewModel (si la implementaste)
-                                    try {
-
-                                    } catch (t: Throwable) {
-                                        // si no existe el método, no rompe en tiempo de ejecución aquí:
-                                        // simplemente no hace nada. Idealmente implementa withdrawOffer en tu ViewModel.
-                                    }
-                                },
+                                onWithdraw = { },
                                 formatter = formatterDateTime
                             )
                         }
@@ -171,6 +171,18 @@ fun OfferListScreen(
 }
 
 @Composable
+fun statusIconFor(status: OfferStatus): ImageVector {
+    return when (status) {
+        OfferStatus.PENDING -> Icons.Filled.HourglassEmpty     // esperando
+        OfferStatus.ACCEPTED -> Icons.Filled.CheckCircle       // aceptado
+        OfferStatus.REJECTED -> Icons.Filled.Cancel            // rechazado
+        OfferStatus.EXPIRED -> Icons.Filled.Schedule           // expirado
+        OfferStatus.WITHDRAWN -> Icons.Filled.Undo             // retirado
+        else -> Icons.Filled.Info                              // fallback
+    }
+}
+
+@Composable
 private fun StatusGroup(
     status: OfferStatus,
     count: Int,
@@ -178,6 +190,8 @@ private fun StatusGroup(
     onWithdraw: (Long) -> Unit,
     formatter: DateTimeFormatter
 ) {
+    var expanded by remember { mutableStateOf(true) }
+
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -198,7 +212,7 @@ private fun StatusGroup(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.DirectionsCar,
+                        imageVector = statusIconFor(status),
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
@@ -221,41 +235,37 @@ private fun StatusGroup(
                 }
             }
 
-            Text(
-                text = when (status) {
-                    OfferStatus.PENDING -> "Pendientes"
-                    OfferStatus.ACCEPTED -> "Aceptadas"
-                    OfferStatus.REJECTED -> "Rechazadas"
-                    OfferStatus.EXPIRED -> "Expiradas"
-                    OfferStatus.WITHDRAWN -> "Retiradas"
-                    else -> status.displayName
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary
-            )
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = TextSecondary
+                )
+            }
         }
 
         Spacer(Modifier.height(8.dp))
 
-        if (offers.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No hay ofertas en este estado", color = TextSecondary)
-            }
-        } else {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                offers.forEach { offer ->
-                    OfferCard(offer = offer, onWithdraw = onWithdraw, formatter = formatter)
+        if (expanded) {
+            if (offers.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No hay ofertas en este estado", color = TextSecondary)
+                }
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    offers.forEach { offer ->
+                        OfferCard(offer = offer, onWithdraw = onWithdraw, formatter = formatter)
+                    }
                 }
             }
-        }
-    }
+        }  }
 }
 
 @Composable
@@ -331,7 +341,7 @@ private fun OfferCard(
                 )
             }
 
-            // ----------- NEW GRID (2 COLUMNS) -----------
+            // ----------- 2 COLUMNS -----------
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -406,7 +416,7 @@ private fun OfferCard(
                 }
             }
 
-            // ----------- BUTTON (ONLY WITHDRAW) -----------
+            // ----------- BUTTON -----------
             Button(
                 onClick = { onWithdraw(offer.id) },
                 modifier = Modifier.fillMaxWidth(),
@@ -464,19 +474,12 @@ private fun OfferStatusBadge(status: OfferStatus) {
     }
 }
 
-// Helper para formatear BigDecimal con moneda (simple)
+// formatear BigDecimal con moneda
 private fun formatMoney(amount: BigDecimal, currency: String): String {
     return try {
-        // evita notación científica
         val valStr = amount.toPlainString()
         "$currency $valStr"
     } catch (e: Exception) {
         "$currency ${amount.toString()}"
     }
 }
-
-// Nota: los colores StatusPendingColor, StatusCompletedColor, StatusRejectedColor están
-// asumidos por consistencia con tu pantalla original. Importa/define si hace falta:
-// import com.atg.autonexo.core.ui.theme.StatusPendingColor
-// import com.atg.autonexo.core.ui.theme.StatusCompletedColor
-// import com.atg.autonexo.core.ui.theme.StatusRejectedColor
