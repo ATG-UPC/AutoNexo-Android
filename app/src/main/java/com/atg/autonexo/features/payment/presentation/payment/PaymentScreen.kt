@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.atg.autonexo.core.components.RoundedHeader
 import com.atg.autonexo.features.payment.domain.models.SubscriptionTier
 
 // Colores del diseño
@@ -69,10 +70,8 @@ fun PaymentScreen(
                 .fillMaxSize()
                 .background(BackgroundWhite)
         ) {
-            // Header curvo con gradiente
-            CurvedHeader(
-                onBack = onBack
-            )
+
+            RoundedHeader("Payment", onBack = onBack)
 
             // Contenido scrolleable
             Column(
@@ -159,60 +158,6 @@ fun PaymentScreen(
                 // Mostrar Snackbar si lo necesitas
             }
         }
-    }
-}
-
-@Composable
-private fun CurvedHeader(
-    onBack: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(HeaderGradientTop, HeaderGradientBottom)
-                )
-            )
-    ) {
-        // Botón de retroceso
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-
-        // Título centrado
-        Text(
-            text = "Plans",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            ),
-            color = Color.White,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = (-20).dp)
-        )
-
-        // Curva inferior usando un Box con clip
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .align(Alignment.BottomCenter)
-                .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                .background(BackgroundWhite)
-        )
     }
 }
 

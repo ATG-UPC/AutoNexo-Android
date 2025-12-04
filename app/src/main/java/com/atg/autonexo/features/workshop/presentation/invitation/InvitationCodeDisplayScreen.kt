@@ -7,7 +7,7 @@ import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +21,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.atg.autonexo.core.components.RoundedHeader
+import com.atg.autonexo.core.ui.theme.ButtonNavy
+import com.atg.autonexo.core.ui.theme.CardBackground
+import com.atg.autonexo.core.ui.theme.TextPrimary
+import com.atg.autonexo.core.ui.theme.TextSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,8 +45,10 @@ fun InvitationCodeDisplayScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("¡Operación Exitosa!") }
+            // Usamos el header redondeado reutilizable
+            RoundedHeader(
+                title = "Taller creado",
+                onBack = onContinue
             )
         }
     ) { paddingValues ->
@@ -49,153 +56,91 @@ fun InvitationCodeDisplayScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(24.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Icono de éxito
-            Icon(
-                Icons.Default.CheckCircle,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "¡Operación realizada existosamente!",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+            Card(
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Presiona el botón para continuar navegando en la aplicación",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            /*
-                        // Código destacado
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                if (uiState.isLoading) {
-                                    CircularProgressIndicator()
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = "Generando código...",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                } else if (uiState.invitationCode != null) {
-                                    Text(
-                                        text = "Código de Invitación",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = uiState.invitationCode!!,
-                                        style = MaterialTheme.typography.displayMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 4.sp,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                                } else {
-                                    Text(
-                                        text = "Error al generar código",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.error
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Botones de acción
-                        if (uiState.invitationCode != null) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Button(
-                                    onClick = {
-                                        uiState.invitationCode?.let { code ->
-                                            copyToClipboard(code, context)
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Copiar")
-                                }
-
-                                Button(
-                                    onClick = {
-                                        uiState.invitationCode?.let { code ->
-                                            shareCode(code, context)
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Compartir")
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(32.dp))
-            */
-            /* Mensaje de error
-            uiState.errorMessage?.let { error ->
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = CardBackground
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(16.dp)
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(72.dp),
+                        tint = ButtonNavy
                     )
+
+                    Text(
+                        text = "¡Operación realizada exitosamente!",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = "Tu taller ha sido configurado correctamente. Ahora puedes continuar usando AutoNexo para gestionar tus solicitudes y empleados.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center
+                    )
+
+                    // Si quieres mostrar un pequeño estado de carga mientras se genera el código
+                    if (uiState.isLoading) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(Modifier.height(8.dp))
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Finalizando configuración...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary
+                            )
+                        }
+                    }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
-*/
-            // Botón continuar
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             Button(
                 onClick = onContinue,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading
+                modifier = Modifier
+                    .fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonNavy,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                shape = RoundedCornerShape(10.dp)
             ) {
-                Text("Volver al Dashboard")
+                Text(
+                    text = "Volver al Dashboard",
+                    fontSize = 16.sp
+                )
             }
         }
     }
 }
 
+// Si en algún momento quieres volver a usar estos helpers para copiar/compartir el código
 private fun copyToClipboard(text: String, context: Context) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText("Código de Invitación", text)
@@ -211,4 +156,3 @@ private fun shareCode(code: String, context: Context) {
     val shareIntent = Intent.createChooser(sendIntent, null)
     context.startActivity(shareIntent)
 }
-

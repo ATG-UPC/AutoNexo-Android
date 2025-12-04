@@ -163,15 +163,20 @@ fun AppNavigation(
             )
         }
 
+        // REQUEST
         composable(Route.HomeNav.Requests.route){
             RequestsScreen(
                 currentRoute = Route.HomeNav.Requests.route,
                 onNavigate = { route ->
                     navController.navigate(route)
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
 
+        //PROFILE
         composable(Route.HomeNav.Profile.route) {
             ProfileScreen(
                 onBack = {
@@ -219,6 +224,9 @@ fun AppNavigation(
             BasicInfoScreen(
                 onNext = { workshopId ->
                     navController.navigate(Route.Workshop.Tags.createRoute(workshopId))
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -236,6 +244,9 @@ fun AppNavigation(
                 workshopId = workshopId,
                 onNext = { workshopId ->
                     navController.navigate(Route.Workshop.Media.createRoute(workshopId))
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -253,6 +264,9 @@ fun AppNavigation(
                 workshopId = workshopId,
                 onNext = { workshopId ->
                     navController.navigate(Route.Workshop.Location.createRoute(workshopId))
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -272,6 +286,9 @@ fun AppNavigation(
                     navController.navigate(Route.Workshop.InvitationCodeDisplay.createRoute(workshopName)) {
                         popUpTo(Route.Workshop.BasicInfo.route) { inclusive = true }
                     }
+                },
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -305,6 +322,7 @@ fun AppNavigation(
                     type = NavType.LongType
                 }
             )
+
         ) { backStackEntry ->
             val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
             WorkshopManagementScreen(
@@ -313,6 +331,7 @@ fun AppNavigation(
                 onInviteEmployee = { id ->
                     navController.navigate(Route.Workshop.InviteEmployee.createRoute(id))
                 }
+
             )
         }
         
