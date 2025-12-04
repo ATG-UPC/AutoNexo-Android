@@ -15,7 +15,7 @@ class RequestRepositoryImpl @Inject constructor(
     private val gson: Gson
 ) : RequestRepository {
 
-    override suspend fun getServiceRequests(): Result<List<Request>> {
+    override suspend fun getRequests(): Result<List<Request>> {
         return try {
             val response = apiService.getServiceRequests()
 

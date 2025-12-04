@@ -11,13 +11,13 @@ sealed class BottomNavItem(
     val title: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
-    object Home : BottomNavItem("home", "Inicio", Icons.Default.Home)
-    object Requests : BottomNavItem("matching/request", "Solicitudes", Icons.Default.Notifications)
-    object Services : BottomNavItem("home/services", "Servicios", Icons.Default.Build)
+    object Home : BottomNavItem("home", "Home", Icons.Default.Home)
+    object Requests : BottomNavItem("home/requests", "Requests", Icons.Default.Notifications)
+    object Services : BottomNavItem("home/services", "Services", Icons.Default.Build)
     object WorkshopRegistration :
-        BottomNavItem("workshop/registration/basic_info", "Taller", Icons.Default.CarRepair)
+        BottomNavItem("workshop/registration/basic_info", "Workshop", Icons.Default.CarRepair)
 
-    object Profile : BottomNavItem("home/profile", "Perfil", Icons.Default.Person)
+    object Profile : BottomNavItem("home/profile", "Profile", Icons.Default.Person)
     object Payment : BottomNavItem("payment/subscription", "Pago", Icons.Default.Payment)
 
 }

@@ -8,15 +8,4 @@ class GetMyOffersUseCase @Inject constructor(
     private val repository: OfferRepository,
 ) {
     suspend operator fun invoke() = repository.getMyOffers()
-
-    suspend fun getSentOffers(): Result<List<Offer>> {
-        return repository.getMyOffers().fold(
-            onSuccess = { offers ->
-                Result.success(offers)
-            },
-            onFailure = { exception ->
-                Result.failure(exception)
-            }
-        )
-    }
 }
