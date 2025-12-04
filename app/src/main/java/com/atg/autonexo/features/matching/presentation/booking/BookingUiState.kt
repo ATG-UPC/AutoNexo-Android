@@ -5,5 +5,7 @@ import com.atg.autonexo.features.matching.domain.models.Booking
 data class BookingUiState(
     val isLoading: Boolean = false,
     val bookings: List<Booking> = emptyList(),
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isConfirmingSchedule: Boolean = false,
+    val isCompletingBooking: Boolean = false
 )

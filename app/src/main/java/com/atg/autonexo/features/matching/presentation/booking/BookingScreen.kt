@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.outlined.Api
 import androidx.compose.material.icons.outlined.Build
@@ -31,8 +33,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,6 +71,9 @@ import com.atg.autonexo.core.ui.theme.TextTertiary
 import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
 import com.atg.autonexo.features.matching.domain.models.Booking
 import com.atg.autonexo.features.matching.domain.models.BookingStatus
+import com.atg.autonexo.features.matching.domain.models.CompleteBookingRequest
+import com.atg.autonexo.features.matching.domain.models.ServiceCatalog
+import com.atg.autonexo.features.matching.domain.models.ServicePerformed
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
@@ -72,9 +83,11 @@ fun BookingScreen(
     onNavigate: (String) -> Unit,
     currentRoute: String,
     onBack: () -> Unit = {}
-){
+) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedBooking by remember { mutableStateOf<Booking?>(null) }
+
+    var selectedBookingDetails by remember { mutableStateOf<Booking?>(null) }
+    var bookingToComplete by remember { mutableStateOf<Booking?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -84,6 +97,7 @@ fun BookingScreen(
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,7 +107,6 @@ fun BookingScreen(
 
             Spacer(Modifier.height(8.dp))
 
-            // HEADER GENERAL: TOTAL
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -165,6 +178,9 @@ fun BookingScreen(
                         BookingStatus.CANCELLED
                     )
 
+                    // 👇 solo mostramos estados que tengan al menos 1 booking
+                    val nonEmptyStatuses = statusOrder.filter { !groupedByStatus[it].isNullOrEmpty() }
+
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier
@@ -172,48 +188,52 @@ fun BookingScreen(
                             .padding(horizontal = 16.dp)
                             .padding(bottom = padding.calculateBottomPadding())
                     ) {
-                        statusOrder.forEach { status ->
-                            val bookingsForStatus = groupedByStatus[status]
-                            if (!bookingsForStatus.isNullOrEmpty()) {
+                        items(
+                            items = nonEmptyStatuses,
+                            key = { it.name }
+                        ) { status ->
+                            val bookingsForStatus = groupedByStatus[status].orEmpty()
 
-                                // Encabezado por estado
-                                item(key = "header_${status.name}") {
-                                    BookingStatusHeader(
-                                        status = status,
-                                        count = bookingsForStatus.size
-                                    )
-                                    Spacer(Modifier.height(8.dp))
+                            BookingStatusGroup(
+                                status = status,
+                                count = bookingsForStatus.size,
+                                bookings = bookingsForStatus,
+                                onDetailsClick = { clicked ->
+                                    selectedBookingDetails = clicked
+                                },
+                                onCompleteClick = { clicked ->
+                                    bookingToComplete = clicked
                                 }
+                            )
 
-                                // Items de ese estado
-                                items(
-                                    items = bookingsForStatus,
-                                    key = { it.id }
-                                ) { booking ->
-                                    BookingCard(
-                                        booking = booking,
-                                        onBookingClick = { clicked ->
-                                            selectedBooking = clicked
-                                        }
-                                    )
-                                }
-
-                                // Separación entre grupos
-                                item(key = "spacer_${status.name}") {
-                                    Spacer(Modifier.height(16.dp))
-                                }
-                            }
+                            Spacer(Modifier.height(8.dp))
                         }
                     }
                 }
             }
         }
 
-        // Popup de detalles
-        if (selectedBooking != null) {
+        // Popup de DETALLES (confirm schedule / info)
+        if (selectedBookingDetails != null) {
             BookingDetailsDialog(
-                booking = selectedBooking!!,
-                onDismiss = { selectedBooking = null }
+                booking = selectedBookingDetails!!,
+                onDismiss = { selectedBookingDetails = null },
+                onConfirmSchedule = { bookingToConfirm ->
+                    viewModel.confirmSchedule(bookingToConfirm)
+                    selectedBookingDetails = null
+                }
+            )
+        }
+
+        // Popup de COMPLETE (formulario con mileage, services, etc.)
+        if (bookingToComplete != null) {
+            CompleteBookingDialog(
+                booking = bookingToComplete!!,
+                onDismiss = { bookingToComplete = null },
+                onConfirm = { bookingId, request ->
+                    viewModel.completeBooking(bookingId, request)
+                    bookingToComplete = null
+                }
             )
         }
     }
@@ -223,13 +243,13 @@ fun BookingScreen(
 @Composable
 fun BookingCard(
     booking: Booking,
-    onBookingClick: (Booking) -> Unit = {},
+    onDetailsClick: (Booking) -> Unit = {},
+    onCompleteClick: (Booking) -> Unit = {}
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val scheduledText = booking.scheduledDate.format(dateFormatter)
     val createdText = booking.createdAt.format(dateFormatter)
 
-    // Mostrar precio final si existe, si no, el propuesto
     val priceToShow = if (booking.finalPriceAmount > BigDecimal.ZERO) {
         booking.finalPriceAmount
     } else {
@@ -298,7 +318,6 @@ fun BookingCard(
                 StatusBadge(status = booking.status)
             }
 
-            // Servicios solicitados
             if (booking.requestedServices.isNotEmpty()) {
                 Row(
                     modifier = Modifier
@@ -322,7 +341,6 @@ fun BookingCard(
                 }
             }
 
-            // Descripción
             if (booking.description.isNotBlank()) {
                 Text(
                     text = booking.description,
@@ -338,7 +356,6 @@ fun BookingCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Precio
                 Column {
                     Text(
                         text = "Price",
@@ -352,7 +369,6 @@ fun BookingCard(
                     )
                 }
 
-                // Fecha de creación
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -378,20 +394,34 @@ fun BookingCard(
                 }
             }
 
-            // Botón Details
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Button(
-                    onClick = { onBookingClick(booking) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonNavy,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text("Details")
+                if (booking.status == BookingStatus.SCHEDULED) {
+                    // 👇 Cuando está programado, botón COMPLETE
+                    Button(
+                        onClick = { onCompleteClick(booking) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ButtonNavy,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Complete")
+                    }
+                } else {
+                    // 👇 Para otros estados, Details
+                    Button(
+                        onClick = { onDetailsClick(booking) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ButtonNavy,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Details")
+                    }
                 }
             }
         }
@@ -440,21 +470,16 @@ fun StatusBadge(status: BookingStatus) {
             StatusPendingToScheduleColor.copy(alpha = 0.18f) to StatusPendingToScheduleColor
         BookingStatus.SCHEDULED ->
             StatusPendingColor.copy(alpha = 0.18f) to StatusPendingColor
-
         BookingStatus.IN_PROGRESS ->
             MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) to MaterialTheme.colorScheme.primary
-
         BookingStatus.COMPLETED,
         BookingStatus.PICKED_UP ->
             StatusCompletedColor.copy(alpha = 0.18f) to StatusCompletedColor
-
         BookingStatus.PENDING_PICKUP ->
             StatusPendingColor.copy(alpha = 0.18f) to StatusPendingColor
-
         BookingStatus.CANCELLED ->
             StatusCancelledColor.copy(alpha = 0.18f) to StatusCancelledColor
     }
-
     Surface(
         color = bgColor,
         shape = RoundedCornerShape(999.dp)
@@ -470,10 +495,93 @@ fun StatusBadge(status: BookingStatus) {
     }
 }
 
+/**
+ * Grupo desplegable por estado (similar a OfferListScreen.StatusGroup)
+ */
+@Composable
+private fun BookingStatusGroup(
+    status: BookingStatus,
+    count: Int,
+    bookings: List<Booking>,
+    onDetailsClick: (Booking) -> Unit,
+    onCompleteClick: (Booking) -> Unit
+) {
+    var expanded by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(ButtonNavy),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Api,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
+                Spacer(Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = status.displayName,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp),
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "Servicios: $count",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextTertiary
+                    )
+                }
+            }
+
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = TextSecondary
+                )
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        if (expanded) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                bookings.forEach { booking ->
+                    BookingCard(
+                        booking = booking,
+                        onDetailsClick = onDetailsClick,
+                        onCompleteClick = onCompleteClick
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun BookingDetailsDialog(
     booking: Booking,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onConfirmSchedule: (Booking) -> Unit = {}
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
@@ -494,14 +602,27 @@ fun BookingDetailsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            Button(
+            if (booking.status == BookingStatus.PENDING_SCHEDULE) {
+                Button(
+                    onClick = { onConfirmSchedule(booking) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ButtonNavy,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Confirm schedule")
+                }
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonNavy,
-                    contentColor = Color.White
-                )
+                border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
             ) {
-                Text("Cerrar")
+                Text(
+                    text = "Cerrar",
+                    color = ButtonNavy
+                )
             }
         },
         title = {
@@ -525,7 +646,6 @@ fun BookingDetailsDialog(
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Estado
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth(),
@@ -541,7 +661,6 @@ fun BookingDetailsDialog(
 
                 Divider()
 
-                // Fechas
                 InfoRow(label = "Scheduled", value = scheduledText)
                 InfoRow(label = "Created", value = createdText)
                 completedText?.let { InfoRow(label = "Completed", value = it) }
@@ -550,10 +669,8 @@ fun BookingDetailsDialog(
 
                 Divider()
 
-                // Precio
                 InfoRow(label = "Price", value = priceText)
 
-                // Servicios
                 if (booking.requestedServices.isNotEmpty()) {
                     Text(
                         text = "Services",
@@ -580,7 +697,6 @@ fun BookingDetailsDialog(
                     }
                 }
 
-                // Descripción
                 if (booking.description.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -595,7 +711,6 @@ fun BookingDetailsDialog(
                     )
                 }
 
-                // Cancel reason
                 if (!booking.cancelledReason.isNullOrBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -611,6 +726,332 @@ fun BookingDetailsDialog(
                 }
             }
         }
+    )
+}
+
+/**
+ * Dialog para completar un booking (JSON:
+ * mileage, services[], observations, imageUrls[], finalPriceAmount, currency)
+ */
+@Composable
+fun CompleteBookingDialog(
+    booking: Booking,
+    onDismiss: () -> Unit,
+    onConfirm: (bookingId: Long, request: CompleteBookingRequest) -> Unit
+) {
+    var mileageText by remember { mutableStateOf("") }
+    var observations by remember { mutableStateOf("") }
+    var finalPriceText by remember { mutableStateOf("") }
+    var currencyText by remember { mutableStateOf(booking.currency ?: "PEN") }
+    var imageUrlsText by remember { mutableStateOf("") }
+
+    var selectedService by remember { mutableStateOf<ServiceCatalog?>(null) }
+    var serviceDescription by remember { mutableStateOf("") }
+    var serviceCostText by remember { mutableStateOf("") }
+    var serviceMenuExpanded by remember { mutableStateOf(false) }
+
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isSubmitting by remember { mutableStateOf(false) }
+
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+    val scheduledText = booking.scheduledDate.format(dateFormatter)
+
+    AlertDialog(
+        onDismissRequest = { if (!isSubmitting) onDismiss() },
+        confirmButton = {
+            Button(
+                onClick = {
+                    // Validaciones simples
+                    val mileage = mileageText.toIntOrNull()
+                    val finalPrice = finalPriceText.replace(",", ".").toBigDecimalOrNull()
+                    val cost = serviceCostText.replace(",", ".").toBigDecimalOrNull()
+
+                    if (mileage == null || mileage < 0) {
+                        errorMessage = "Ingresa un kilometraje válido"
+                        return@Button
+                    }
+
+                    if (selectedService == null) {
+                        errorMessage = "Selecciona al menos un servicio"
+                        return@Button
+                    }
+
+                    if (cost == null || cost <= BigDecimal.ZERO) {
+                        errorMessage = "Ingresa un costo válido para el servicio"
+                        return@Button
+                    }
+
+                    if (finalPrice == null || finalPrice <= BigDecimal.ZERO) {
+                        errorMessage = "Ingresa un monto total final válido"
+                        return@Button
+                    }
+
+                    val imageUrls = imageUrlsText
+                        .split("\n", ",")
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+
+                    val services = listOf(
+                        ServicePerformed(
+                            serviceType = selectedService!!.name,   // enum name -> backend enum
+                            description = serviceDescription,
+                            cost = cost
+                        )
+                    )
+
+                    val request = CompleteBookingRequest(
+                        mileage = mileage,
+                        services = services,
+                        observations = observations,
+                        imageUrls = imageUrls,
+                        finalPriceAmount = finalPrice,
+                        currency = currencyText.ifBlank { "PEN" }
+                    )
+
+                    isSubmitting = true
+                    errorMessage = null
+                    onConfirm(booking.id, request)
+                    isSubmitting = false
+                },
+                enabled = !isSubmitting,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ButtonNavy,
+                    contentColor = Color.White
+                )
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Complete booking")
+                }
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = { if (!isSubmitting) onDismiss() },
+                enabled = !isSubmitting,
+                border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
+            ) {
+                Text(
+                    text = "Cancelar",
+                    color = ButtonNavy
+                )
+            }
+        },
+        title = {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = null,
+                        tint = ButtonNavy,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Complete Booking #${booking.id}",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+                Text(
+                    text = "Scheduled: $scheduledText",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary
+                )
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Mileage
+                OutlinedTextField(
+                    value = mileageText,
+                    onValueChange = {
+                        mileageText = it.filter { c -> c.isDigit() }.take(7)
+                        errorMessage = null
+                    },
+                    label = { Text("Mileage (km)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
+                    )
+                )
+
+                // --- Servicio (usamos ServiceCatalog)
+                Text(
+                    text = "Service performed",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextTertiary
+                )
+
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Selector de tipo de servicio
+                    OutlinedButton(
+                        onClick = { serviceMenuExpanded = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedService?.displayName ?: "Seleccionar servicio",
+                                color = TextPrimary
+                            )
+                            Icon(
+                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = TextSecondary
+                            )
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = serviceMenuExpanded,
+                        onDismissRequest = { serviceMenuExpanded = false }
+                    ) {
+                        ServiceCatalog.values().forEach { service ->
+                            DropdownMenuItem(
+                                text = { Text(service.displayName) },
+                                onClick = {
+                                    selectedService = service
+                                    serviceMenuExpanded = false
+                                    errorMessage = null
+                                }
+                            )
+                        }
+                    }
+
+                    // Descripción opcional
+                    OutlinedTextField(
+                        value = serviceDescription,
+                        onValueChange = {
+                            serviceDescription = it
+                        },
+                        label = { Text("Descripción del servicio (opcional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ButtonNavy,
+                            focusedLabelColor = ButtonNavy,
+                            cursorColor = ButtonNavy
+                        )
+                    )
+
+                    // Costo del servicio
+                    OutlinedTextField(
+                        value = serviceCostText,
+                        onValueChange = {
+                            serviceCostText = it.filter { c -> c.isDigit() || c == '.' || c == ',' }
+                            errorMessage = null
+                        },
+                        label = { Text("Costo del servicio") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ButtonNavy,
+                            focusedLabelColor = ButtonNavy,
+                            cursorColor = ButtonNavy
+                        )
+                    )
+                }
+
+                // Observaciones
+                OutlinedTextField(
+                    value = observations,
+                    onValueChange = { observations = it },
+                    label = { Text("Observations (opcional)") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(90.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
+                    )
+                )
+
+                // URLs de imágenes (una por línea o separadas por coma)
+                OutlinedTextField(
+                    value = imageUrlsText,
+                    onValueChange = { imageUrlsText = it },
+                    label = { Text("Image URLs (opcional)") },
+                    supportingText = {
+                        Text(
+                            text = "Una URL por línea o separadas por coma",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextTertiary
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(90.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ButtonNavy,
+                        focusedLabelColor = ButtonNavy,
+                        cursorColor = ButtonNavy
+                    )
+                )
+
+                // Precio final + moneda
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = finalPriceText,
+                        onValueChange = {
+                            finalPriceText = it.filter { c -> c.isDigit() || c == '.' || c == ',' }
+                            errorMessage = null
+                        },
+                        label = { Text("Final price amount") },
+                        singleLine = true,
+                        modifier = Modifier.weight(2f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ButtonNavy,
+                            focusedLabelColor = ButtonNavy,
+                            cursorColor = ButtonNavy
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = currencyText,
+                        onValueChange = { currencyText = it.take(3) },
+                        label = { Text("Currency") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ButtonNavy,
+                            focusedLabelColor = ButtonNavy,
+                            cursorColor = ButtonNavy
+                        )
+                    )
+                }
+
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        containerColor = CardBackground,
+        textContentColor = TextPrimary
     )
 }
 

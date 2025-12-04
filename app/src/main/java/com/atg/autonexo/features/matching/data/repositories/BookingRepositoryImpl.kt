@@ -1,10 +1,8 @@
 package com.atg.autonexo.features.matching.data.repositories
 
-import android.content.Context
-import android.net.Uri
 import com.atg.autonexo.features.auth.data.remote.models.ErrorResponseDto
 import com.atg.autonexo.features.matching.data.mappers.toDomain
-import com.atg.autonexo.features.matching.data.remote.models.AcceptScheduleRequestDto
+import com.atg.autonexo.features.matching.data.mappers.toDto
 import com.atg.autonexo.features.matching.data.remote.models.CompleteBookingRequestDto
 import com.atg.autonexo.features.matching.data.remote.models.ServicePerformedDto
 import com.atg.autonexo.features.matching.data.remote.services.BookingApiService
@@ -14,10 +12,7 @@ import com.atg.autonexo.features.matching.domain.models.CompleteBookingRequest
 import com.atg.autonexo.features.matching.domain.repositories.BookingRepository
 import com.google.gson.Gson
 import retrofit2.HttpException
-import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 class BookingRepositoryImpl @Inject constructor(
@@ -25,14 +20,14 @@ class BookingRepositoryImpl @Inject constructor(
     private val gson: Gson
 ) : BookingRepository {
 
-    override suspend fun getMyBookings(): Result<List<Booking>>{
+    override suspend fun getMyBookings(): Result<List<Booking>> {
         return try {
             val response = apiService.getMyBookings()
 
             if (response.isSuccessful && response.body() != null) {
                 val bookings = response.body()!!.toDomain()
                 Result.success(bookings)
-        } else {
+            } else {
                 Result.failure(Exception(parseError(response, "Error al obtener Agenda")))
             }
         } catch (e: HttpException) {
@@ -49,20 +44,30 @@ class BookingRepositoryImpl @Inject constructor(
         request: AcceptScheduleRequest
     ): Result<Booking> {
         return try {
-            val dto = AcceptScheduleRequestDto(
-                newScheduledDate = request.newScheduledDate
+            val dto = request.toDto()
+
+            val response = apiService.acceptScheduleChange(
+                bookingId = bookingId,
+                request = dto
             )
 
-            val response = apiService.acceptScheduleChange(bookingId,dto)
-
             if (response.isSuccessful && response.body() != null) {
+                // mapear el BookingResponseDto al Booking de dominio
                 val booking = response.body()!!.toDomain()
                 Result.success(booking)
             } else {
-                Result.failure(Exception(parseError(response, "Error al aceptar cambio de horario")))
+                Result.failure(
+                    Exception(
+                        parseError(response, "Error al confirmar la reprogramación")
+                    )
+                )
             }
         } catch (e: HttpException) {
-            Result.failure(Exception(parseHttpException(e, "Error al obtener invitación")))
+            Result.failure(
+                Exception(
+                    parseHttpException(e, "Error al confirmar la reprogramación")
+                )
+            )
         } catch (e: IOException) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {
@@ -75,7 +80,6 @@ class BookingRepositoryImpl @Inject constructor(
         request: CompleteBookingRequest
     ): Result<Booking> {
         return try {
-
             val dto = CompleteBookingRequestDto(
                 mileage = request.mileage,
                 services = request.services.map {
