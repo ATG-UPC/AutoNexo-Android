@@ -227,7 +227,11 @@ fun AppNavigation(
                 },
                 onBack = {
                     navController.popBackStack()
-                }
+                },
+                currentRoute = Route.Workshop.BasicInfo.route,
+                onNavigate = { route ->
+                    navController.navigate(route)
+                },
             )
         }
         
@@ -236,7 +240,8 @@ fun AppNavigation(
             arguments = listOf(
                 navArgument("workshopId") {
                     type = NavType.LongType
-                }
+                },
+
             )
         ) { backStackEntry ->
             val workshopId = backStackEntry.arguments?.getLong("workshopId") ?: 0L
@@ -247,6 +252,10 @@ fun AppNavigation(
                 },
                 onBack = {
                     navController.popBackStack()
+                },
+                currentRoute = Route.Workshop.Tags.route,
+                onNavigate = { route ->
+                    navController.navigate(route)
                 }
             )
         }
@@ -267,6 +276,10 @@ fun AppNavigation(
                 },
                 onBack = {
                     navController.popBackStack()
+                },
+                currentRoute = Route.Workshop.Media.route,
+                onNavigate = { route ->
+                    navController.navigate(route)
                 }
             )
         }
@@ -289,6 +302,10 @@ fun AppNavigation(
                 },
                 onBack = {
                     navController.popBackStack()
+                },
+                currentRoute = Route.Workshop.Media.route,
+                onNavigate = { route ->
+                    navController.navigate(route)
                 }
             )
         }

@@ -10,6 +10,7 @@ import com.atg.autonexo.features.workshop.domain.usecases.GetInvitationsUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetMyWorkshopUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetWorkshopEmployeesUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetWorkshopLocationsUseCase
+import com.atg.autonexo.features.workshop.domain.usecases.GetWorkshopStaffUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,11 +22,12 @@ import javax.inject.Inject
 class WorkshopManagementViewModel @Inject constructor(
     private val createInvitationUseCase: CreateInvitationUseCase,
     private val getInvitationsUseCase: GetInvitationsUseCase,
-    private val getWorkshopEmployeesUseCase: GetWorkshopEmployeesUseCase,
+    private val getWorkshopStaffUseCase: GetWorkshopStaffUseCase,
     private val deactivateEmployeeUseCase: DeactivateEmployeeUseCase,
     private val activateEmployeeUseCase: ActivateEmployeeUseCase,
     private val getMyWorkshopsUseCase: GetMyWorkshopUseCase,
     private val getWorkshopLocationsUseCase: GetWorkshopLocationsUseCase
+
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WorkshopManagementUiState())
@@ -107,16 +109,18 @@ class WorkshopManagementViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoadingEmployees = true,
-                errorMessage = null
+                errorMessage = null,
+                workshopId = workshopId
             )
 
-            getWorkshopEmployeesUseCase(workshopId)
-                .onSuccess { employees ->
-                    val activeCount = employees.count { it.active }
+            getWorkshopStaffUseCase()
+                .onSuccess { staff ->
+                    val activeCount = staff.count { it.isActive }
+
                     _uiState.value = _uiState.value.copy(
-                        employees = employees,
+                        employees = staff,
                         activeEmployeesCount = activeCount,
-                        totalEmployeesCount = employees.size,
+                        totalEmployeesCount = staff.size,
                         isLoadingEmployees = false
                     )
                 }

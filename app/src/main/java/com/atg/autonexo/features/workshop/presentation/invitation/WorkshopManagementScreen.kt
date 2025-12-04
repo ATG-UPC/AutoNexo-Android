@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.atg.autonexo.features.workshop.domain.models.WorkshopStaff
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -216,7 +217,7 @@ fun WorkshopManagementScreen(
                     }
                 }
             }
-
+/*
             // TÍTULO LISTA EMPLEADOS
             item {
                 Text(
@@ -285,7 +286,10 @@ fun WorkshopManagementScreen(
                     )
                 }
             }
+             */
+
         }
+
     }
 }
 
@@ -326,7 +330,7 @@ fun StatCard(
 
 @Composable
 fun EmployeeCard(
-    employee: com.atg.autonexo.features.workshop.domain.models.WorkshopEmployee,
+    employee: WorkshopStaff,
     onToggleActive: (Boolean) -> Unit
 ) {
     Card(
@@ -346,12 +350,12 @@ fun EmployeeCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = employee.email,
+                    text = employee.userId.toString(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = com.atg.autonexo.core.ui.theme.TextPrimary
                 )
-
+                /*
                 if (employee.firstName != null || employee.lastName != null) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -396,7 +400,11 @@ fun EmployeeCard(
                     else
                         com.atg.autonexo.core.ui.theme.ButtonNavy
                 )
+
+                 */
             }
+
+
         }
     }
 }
