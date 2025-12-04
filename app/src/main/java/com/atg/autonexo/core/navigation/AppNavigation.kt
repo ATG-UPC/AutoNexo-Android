@@ -21,6 +21,7 @@ import com.atg.autonexo.features.workshop.presentation.invitation.AcceptInvitati
 import com.atg.autonexo.features.workshop.presentation.invitation.InvitationCodeDisplayScreen
 import com.atg.autonexo.features.home.presentation.home.HomeScreen
 import com.atg.autonexo.features.matching.presentation.booking.BookingScreen
+import com.atg.autonexo.features.matching.presentation.offerlist.OfferListScreen
 import com.atg.autonexo.features.matching.presentation.requests.RequestsScreen
 import com.atg.autonexo.features.payment.presentation.payment.PaymentScreen
 import com.atg.autonexo.features.profile.presentation.ProfileScreen
@@ -166,6 +167,18 @@ fun AppNavigation(
         composable(Route.HomeNav.Requests.route){
             RequestsScreen(
                 currentRoute = Route.HomeNav.Requests.route,
+                onNavigate = { route ->
+                    navController.navigate(route)
+                },
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Route.HomeNav.Offers.route){
+            OfferListScreen(
+                currentRoute = Route.HomeNav.Offers.route,
                 onNavigate = { route ->
                     navController.navigate(route)
                 },
