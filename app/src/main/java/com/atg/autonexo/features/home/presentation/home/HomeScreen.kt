@@ -1,5 +1,6 @@
 package com.atg.autonexo.features.home.presentation.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -21,11 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.atg.autonexo.R
 import com.atg.autonexo.core.ui.theme.StatusCancelledColor
 import com.atg.autonexo.core.ui.theme.StatusCompletedColor
 import com.atg.autonexo.core.ui.theme.StatusPendingColor
@@ -133,11 +136,7 @@ fun HomeScreen(
                             drawerState.open()
                         }
                     },
-                    /*
-                    onNotificationClick = {
-                        // TODO: Navegar a notificaciones cuando esté implementado
-                    },
-                    */
+
                     onRefreshClick = { homeViewModel.refresh() }
                 )
 
@@ -187,9 +186,7 @@ fun HomeScreen(
 private fun HomeHeader(
     userName: String?,
     onMenuClick: () -> Unit,
-    /*
-    onNotificationClick: () -> Unit,
-     */
+
     onRefreshClick: () -> Unit
 ) {
     Box(
@@ -225,6 +222,12 @@ private fun HomeHeader(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.autonexo_logo),
+                        contentDescription = "Logo Autonexo",
+                        modifier = Modifier.size(148.dp),
+                        contentScale = ContentScale.Fit
+                    )/*
                     Text(
                         text = "Autonexo",
                         style = MaterialTheme.typography.titleLarge.copy(
@@ -240,6 +243,7 @@ private fun HomeHeader(
                         ),
                         color = Color(0xFFFF6B6B)
                     )
+                    */
                 }
 
                 Row {

@@ -1,5 +1,6 @@
 package com.atg.autonexo.features.home.presentation.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,9 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.atg.autonexo.R
 
 // Colores del diseño
 private val DrawerBackground = Color(0xFF1E1E1E)
@@ -44,7 +48,6 @@ fun SideNavigationBar(
 ) {
     var selectedLanguage by remember { mutableStateOf(Language.ENGLISH) }
     var selectedTheme by remember { mutableStateOf(Theme.LIGHT) }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -67,41 +70,7 @@ fun SideNavigationBar(
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-/*
-        // Support and Assistance
-        DrawerMenuItem(
-            icon = Icons.Default.Phone,
-            text = "Support and Assistance",
-            onClick = {
-                // TODO: Navegar a Support cuando esté implementado
-            }
-        )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Terms of use
-        DrawerMenuItem(
-            icon = Icons.Outlined.Description,
-            text = "Terms of use",
-            onClick = {
-                // TODO: Navegar a Terms cuando esté implementado
-            }
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Privacy Policy
-        DrawerMenuItem(
-            icon = Icons.Outlined.Info,
-            text = "Privacy Policy",
-            onClick = {
-                // TODO: Navegar a Privacy Policy cuando esté implementado
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-*/
-        // Language Selector
         Column(
             modifier = Modifier
                 .fillMaxWidth()
