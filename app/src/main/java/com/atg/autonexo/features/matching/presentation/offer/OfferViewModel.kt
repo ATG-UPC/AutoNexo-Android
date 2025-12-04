@@ -117,7 +117,7 @@ class OfferViewModel @Inject constructor(
         if (!validate()) return
 
         val state = _uiState.value
-        val price = state.proposedPrice!!     // seguro tras validate
+        val price = state.proposedPrice!!
         val request = CreateOfferRequest(
             serviceRequestId = state.serviceRequestId!!,
             proposedPriceAmount = price,

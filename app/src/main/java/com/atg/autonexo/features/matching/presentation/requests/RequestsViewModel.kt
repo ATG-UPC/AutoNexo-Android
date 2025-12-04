@@ -33,7 +33,7 @@ class RequestsViewModel @Inject constructor(
                 .onSuccess { requests ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        requests = requests,
+                        requests = requests.asReversed(),
                         errorMessage = null
                     )
                 }

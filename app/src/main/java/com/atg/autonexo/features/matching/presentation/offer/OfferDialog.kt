@@ -28,6 +28,14 @@ fun OfferDialog(
         viewModel.setServiceRequestId(serviceRequestId)
     }
 
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            kotlinx.coroutines.delay(6500)
+            viewModel.clearAfterSuccess()
+            onSuccess(serviceRequestId)
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -84,19 +92,24 @@ fun OfferDialog(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(onClick = {
+                        viewModel.clearAfterSuccess()
+                        onDismiss()
+                    }) {
                         Text("Cancel")
                     }
 
                     Button(
                         onClick = {
-                            viewModel.createOffer { id ->
-                                onSuccess(id)
-                            }
+                            viewModel.createOffer { }
                         },
                         enabled = !state.isSubmitting
                     ) {
-                        Text(if (state.isSubmitting) "Sending..." else "Send")
+                        when {
+                            state.isSubmitting -> Text("Sending...")
+                            state.isSuccess -> Text("✔ Success")
+                            else -> Text("Send")
+                        }
                     }
                 }
             }
