@@ -159,7 +159,7 @@ fun OfferListScreen(
                                 status = status,
                                 count = offersForStatus.size,
                                 offers = offersForStatus,
-                                onWithdraw = { },
+                                onWithdraw = { id -> viewModel.withdrawOffer(id) },
                                 formatter = formatterDateTime
                             )
                         }
@@ -261,7 +261,11 @@ private fun StatusGroup(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     offers.forEach { offer ->
-                        OfferCard(offer = offer, onWithdraw = onWithdraw, formatter = formatter)
+                        OfferCard(
+                            offer = offer,
+                            onWithdraw = onWithdraw,
+                            formatter = formatter
+                        )
                     }
                 }
             }
@@ -278,6 +282,8 @@ private fun OfferCard(
     val proposedDateText = offer.proposedDate.format(formatter)
     val expiresText = offer.expiresAt.format(formatter)
     val acceptedText = offer.acceptedAt?.format(formatter) ?: "-"
+    var showWithdrawDialog by remember { mutableStateOf(false) }
+    var selectedOfferId by remember { mutableStateOf<Long?>(null) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -417,15 +423,31 @@ private fun OfferCard(
             }
 
             // ----------- BUTTON -----------
-            Button(
-                onClick = { onWithdraw(offer.id) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = StatusCancelledColor,
-                    contentColor = Color.White
+            if (offer.status == OfferStatus.PENDING) {
+                Button(
+                    onClick = {
+                        selectedOfferId = offer.id
+                        showWithdrawDialog = true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = StatusCancelledColor,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("WITHDRAW")
+                }
+            }
+
+            if (showWithdrawDialog && selectedOfferId != null) {
+                WithdrawConfirmDialog(
+                    offerId = selectedOfferId!!,
+                    onDismiss = { showWithdrawDialog = false },
+                    onConfirmWithdraw = { id ->
+                        onWithdraw(id)
+                        showWithdrawDialog = false
+                    }
                 )
-            ) {
-                Text("WITHDRAW")
             }
         }
     }

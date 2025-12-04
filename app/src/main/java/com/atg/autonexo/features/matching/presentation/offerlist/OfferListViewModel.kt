@@ -23,28 +23,44 @@ data class OfferListViewModel @Inject constructor(
     init {
         loadOffers()
     }
-        fun loadOffers() {
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                errorMessage = null
-            )
+    fun loadOffers() {
+        _uiState.value = _uiState.value.copy(
+            isLoading = false,
+            errorMessage = null
+        )
 
-            viewModelScope.launch {
-                getMyOffersUseCase()
-                    .onSuccess { offers ->
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            offers = offers.asReversed(),
-                            errorMessage = null
-                        )
-                    }
-                    .onFailure { exception ->
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = exception.message ?: "Error al obtener las ofertas"
-                        )
-                    }
-            }
+        viewModelScope.launch {
+            getMyOffersUseCase()
+                .onSuccess { offers ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        offers = offers.asReversed(),
+                        errorMessage = null
+                    )
+                }
+                .onFailure { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Error al obtener las ofertas"
+                    )
+                }
         }
+    }
+    fun withdrawOffer(offerId: Long) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            withdrawOfferUseCase(offerId)
+                .onSuccess {
+                    loadOffers()   // refrescar lista
+                }
+                .onFailure {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = it.message ?: "Error al retirar oferta"
+                    )
+                }
+        }
+    }
 
 }
