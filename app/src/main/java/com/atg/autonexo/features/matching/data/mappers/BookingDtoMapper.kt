@@ -23,7 +23,7 @@ fun BookingResponseDto.toDomain(): Booking {
         finalPriceAmount = finalPriceAmount,
         currency = currency,
         status = status,
-        requestedServices = requestedServices,
+        requestedServices = this.requestedServices ?: emptyList(),
         description = description,
         completedAt = completedAt,
         pickedUpAt = pickedUpAt,

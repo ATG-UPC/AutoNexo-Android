@@ -182,6 +182,25 @@ class LocationViewModel @Inject constructor(
 
             result
                 .onSuccess {
+
+                    getWorkshopLocationsUseCase(workshopId)
+                        .onSuccess { locations ->
+                            val loc = locations.firstOrNull()
+                            if (loc != null) {
+                                _uiState.value = _uiState.value.copy(
+                                    locationId = loc.id,
+                                    ogStreet   = loc.street,
+                                    ogCity     = loc.city,
+                                    ogState    = loc.state,
+                                    ogZip      = loc.zip,
+                                    ogCountry  = loc.country,
+                                    ogLatitude = loc.latitude,
+                                    ogLongitude = loc.longitude
+                                )
+                            }
+                        }
+
+                    // Y mantenemos la lógica de obtener el nombre del workshop
                     getMyWorkshopUseCase()
                         .onSuccess { workshop ->
                             _uiState.value = _uiState.value.copy(isLoading = false)
@@ -200,5 +219,6 @@ class LocationViewModel @Inject constructor(
                 }
         }
     }
+
 }
 

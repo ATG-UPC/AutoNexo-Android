@@ -27,7 +27,7 @@ data class BookingResponseDto(
     @SerializedName("status")
     val status: BookingStatus,
     @SerializedName("requestedServices")
-    val requestedServices: List<ServiceCatalog>,
+    val requestedServices: List<ServiceCatalog>?,
     @SerializedName("description")
     val description: String,
     @SerializedName("completedAt")
