@@ -12,6 +12,7 @@ import com.atg.autonexo.features.workshop.data.remote.models.UpdateWorkshopReque
 import com.atg.autonexo.features.workshop.data.remote.models.UploadResponseDto
 import com.atg.autonexo.features.workshop.data.remote.models.WorkshopEmployeeResponseDto
 import com.atg.autonexo.features.workshop.data.remote.models.WorkshopResponseDto
+import com.atg.autonexo.features.workshop.data.remote.models.WorkshopStaffResponseDto
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -132,5 +133,10 @@ interface WorkshopApiService {
         @Path("workshopId") workshopId: Long,
         @Path("employeeId") employeeId: Long
     ): Response<Unit>
+
+    // STAFF
+    @GET("/api/v1/workshops/my-workshop/staff")
+    suspend fun getWorkshopStaff(): Response<List<WorkshopStaffResponseDto>>
+
 }
 

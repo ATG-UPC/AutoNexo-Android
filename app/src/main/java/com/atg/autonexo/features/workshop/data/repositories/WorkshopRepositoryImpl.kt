@@ -16,6 +16,7 @@ import com.atg.autonexo.features.workshop.domain.models.Invitation
 import com.atg.autonexo.features.workshop.domain.models.Location
 import com.atg.autonexo.features.workshop.domain.models.Workshop
 import com.atg.autonexo.features.workshop.domain.models.WorkshopEmployee
+import com.atg.autonexo.features.workshop.domain.models.WorkshopStaff
 import com.atg.autonexo.features.workshop.domain.repositories.WorkshopRepository
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -42,9 +43,9 @@ class WorkshopRepositoryImpl @Inject constructor(
                 legalName = request.legalName,
                 ruc = request.ruc
             )
-            
+
             val response = apiService.createWorkshop(dto)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val workshop = response.body()!!.toDomain()
                 Result.success(workshop)
@@ -63,7 +64,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun getWorkshopById(workshopId: Long): Result<Workshop> {
         return try {
             val response = apiService.getWorkshopById(workshopId)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val workshop = response.body()!!.toDomain()
                 Result.success(workshop)
@@ -82,7 +83,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun getMyWorkshop(): Result<Workshop> {
         return try {
             val response = apiService.getMyWorkshop()
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val workshop = response.body()!!.toDomain()
                 Result.success(workshop)
@@ -106,9 +107,9 @@ class WorkshopRepositoryImpl @Inject constructor(
                 legalName = workshop.legalName,
                 ruc = workshop.ruc
             )
-            
+
             val response = apiService.updateWorkshop(dto)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val updatedWorkshop = response.body()!!.toDomain()
                 Result.success(updatedWorkshop)
@@ -124,13 +125,33 @@ class WorkshopRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getWorkshopLocations(workshopId: Long): Result<List<Location>> {
+        return try {
+            val response = apiService.getWorkshopLocations()
+
+            if (response.isSuccessful && response.body() != null) {
+                val locations = response.body()!!.map { it.toDomain() }
+                Result.success(locations)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al obtener ubicaciones")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener ubicaciones")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== TAGS ==========
     override suspend fun updateTags(workshopId: Long, tags: List<String>): Result<Workshop> {
         return try {
             val response = apiService.updateTags(tags)
-            
+
             android.util.Log.d("WorkshopRepository", "updateTags - Código HTTP: ${response.code()}")
             android.util.Log.d("WorkshopRepository", "updateTags - Es exitoso: ${response.isSuccessful}")
-            
+
             if (response.isSuccessful) {
                 val workshopDto = response.body()
                 if (workshopDto != null) {
@@ -151,15 +172,15 @@ class WorkshopRepositoryImpl @Inject constructor(
                 } catch (ex: Exception) {
                     ""
                 }
-                
+
                 android.util.Log.e("WorkshopRepository", "updateTags - Error HTTP ${response.code()}: $errorBodyString")
                 Result.failure(Exception(parseError(response, "Error al actualizar tags")))
             }
         } catch (e: com.google.gson.JsonSyntaxException) {
             // Error específico de parsing JSON - el backend devolvió un string en lugar de objeto
             android.util.Log.e("WorkshopRepository", "updateTags - Error de parsing JSON: ${e.message}")
-            
-            // Si el error es porque esperaba objeto pero recibió string, 
+
+            // Si el error es porque esperaba objeto pero recibió string,
             // probablemente el backend devolvió un mensaje de éxito como string
             // Intentamos obtener el workshop actualizado
             try {
@@ -184,7 +205,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun addTags(workshopId: Long, tags: List<String>): Result<Workshop> {
         return try {
             val response = apiService.addTags(tags)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val workshop = response.body()!!.toDomain()
                 Result.success(workshop)
@@ -200,15 +221,16 @@ class WorkshopRepositoryImpl @Inject constructor(
         }
     }
 
+    // ========== PHOTOS ==========
     override suspend fun uploadLogo(workshopId: Long, imageUri: Uri): Result<String> {
         return try {
             val file = uriToFile(imageUri) ?: return Result.failure(Exception("No se pudo procesar la imagen"))
-            
+
             val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-            
+
             val response = apiService.uploadLogo(body)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val url = response.body()!!.url
                 Result.success(url)
@@ -227,12 +249,12 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun uploadPhoto(workshopId: Long, imageUri: Uri): Result<String> {
         return try {
             val file = uriToFile(imageUri) ?: return Result.failure(Exception("No se pudo procesar la imagen"))
-            
+
             val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
             val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-            
+
             val response = apiService.uploadPhoto(body)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val url = response.body()!!.url
                 Result.success(url)
@@ -251,7 +273,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun deletePhoto(workshopId: Long, photoIndex: Int): Result<Unit> {
         return try {
             val response = apiService.deletePhoto(photoIndex)
-            
+
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -266,6 +288,7 @@ class WorkshopRepositoryImpl @Inject constructor(
         }
     }
 
+    // ========== LOCATION ==========
     override suspend fun addLocation(workshopId: Long, location: Location): Result<Location> {
         return try {
             val dto = AddLocationRequestDto(
@@ -277,9 +300,9 @@ class WorkshopRepositoryImpl @Inject constructor(
                 latitude = location.latitude,
                 longitude = location.longitude
             )
-            
+
             val response = apiService.addLocation(dto)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val createdLocation = response.body()!!.toDomain()
                 Result.success(createdLocation)
@@ -295,29 +318,11 @@ class WorkshopRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getWorkshopLocations(workshopId: Long): Result<List<Location>> {
-        return try {
-            val response = apiService.getWorkshopLocations()
-            
-            if (response.isSuccessful && response.body() != null) {
-                val locations = response.body()!!.map { it.toDomain() }
-                Result.success(locations)
-            } else {
-                Result.failure(Exception(parseError(response, "Error al obtener ubicaciones")))
-            }
-        } catch (e: HttpException) {
-            Result.failure(Exception(parseHttpException(e, "Error al obtener ubicaciones")))
-        } catch (e: IOException) {
-            Result.failure(Exception("Error de conexión: ${e.message}"))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     override suspend fun getLocationById(workshopId: Long, locationId: Long): Result<Location> {
         return try {
             val response = apiService.getLocationById(locationId)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val location = response.body()!!.toDomain()
                 Result.success(location)
@@ -344,9 +349,9 @@ class WorkshopRepositoryImpl @Inject constructor(
                 latitude = location.latitude,
                 longitude = location.longitude
             )
-            
+
             val response = apiService.updateLocation(locationId, dto)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val updatedLocation = response.body()!!.toDomain()
                 Result.success(updatedLocation)
@@ -365,7 +370,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun deleteLocation(workshopId: Long, locationId: Long): Result<Unit> {
         return try {
             val response = apiService.deleteLocation(locationId)
-            
+
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -385,13 +390,13 @@ class WorkshopRepositoryImpl @Inject constructor(
             val inputStream = context.contentResolver.openInputStream(uri) ?: return null
             val file = File(context.cacheDir, "temp_image_${System.currentTimeMillis()}.jpg")
             val outputStream = FileOutputStream(file)
-            
+
             inputStream.use { input ->
                 outputStream.use { output ->
                     input.copyTo(output)
                 }
             }
-            
+
             file
         } catch (e: Exception) {
             null
@@ -404,13 +409,13 @@ class WorkshopRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             ""
         }
-        
+
         return when {
             errorBodyString.isNotBlank() -> {
                 try {
                     val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
                     val backendMessage = errorResponse.message ?: errorResponse.error
-                    
+
                     when (response.code()) {
                         400 -> backendMessage ?: "Datos inválidos"
                         401 -> "No autorizado"
@@ -452,13 +457,13 @@ class WorkshopRepositoryImpl @Inject constructor(
         } catch (ex: Exception) {
             ""
         }
-        
+
         return when {
             errorBodyString.isNotBlank() -> {
                 try {
                     val errorResponse = gson.fromJson(errorBodyString, ErrorResponseDto::class.java)
                     val backendMessage = errorResponse.message ?: errorResponse.error
-                    
+
                     when (e.code()) {
                         400 -> backendMessage ?: "Datos inválidos"
                         401 -> "No autorizado"
@@ -500,9 +505,9 @@ class WorkshopRepositoryImpl @Inject constructor(
                 message = request.message,
                 validityDays = request.validityDays
             )
-            
+
             val response = apiService.createInvitation(dto)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val invitationDto = response.body()!!
                 val invitation = invitationDto.toDomain()
@@ -522,7 +527,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun getInvitations(): Result<List<Invitation>> {
         return try {
             val response = apiService.getInvitations()
-            
+
             if (response.isSuccessful) {
                 // Si el body es null, devolver lista vacía en lugar de error
                 val invitationsDto = response.body() ?: emptyList()
@@ -555,7 +560,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun getInvitationByCode(code: String): Result<Invitation> {
         return try {
             val response = apiService.getInvitationByCode(code)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 val invitationDto = response.body()!!
                 val invitation = invitationDto.toDomain()
@@ -578,9 +583,9 @@ class WorkshopRepositoryImpl @Inject constructor(
                 invitationCode = request.invitationCode,
                 email = request.email
             )
-            
+
             val response = apiService.acceptInvitation(dto)
-            
+
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
@@ -600,7 +605,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun getWorkshopEmployees(workshopId: Long): Result<List<WorkshopEmployee>> {
         return try {
             val response = apiService.getWorkshopEmployees(workshopId)
-            
+
             if (response.isSuccessful) {
                 // Si el body es null, devolver lista vacía en lugar de error
                 val employeesDto = response.body() ?: emptyList()
@@ -633,7 +638,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun deactivateEmployee(workshopId: Long, employeeId: Long): Result<Unit> {
         return try {
             val response = apiService.deactivateEmployee(workshopId, employeeId)
-            
+
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -651,7 +656,7 @@ class WorkshopRepositoryImpl @Inject constructor(
     override suspend fun activateEmployee(workshopId: Long, employeeId: Long): Result<Unit> {
         return try {
             val response = apiService.activateEmployee(workshopId, employeeId)
-            
+
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
@@ -659,6 +664,26 @@ class WorkshopRepositoryImpl @Inject constructor(
             }
         } catch (e: HttpException) {
             Result.failure(Exception(parseHttpException(e, "Error al activar empleado")))
+        } catch (e: IOException) {
+            Result.failure(Exception("Error de conexión: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ========== STAFF ==========
+    override suspend fun getWorkshopStaff(): Result<List<WorkshopStaff>> {
+        return try {
+            val response = apiService.getWorkshopStaff()
+
+            if (response.isSuccessful && response.body() != null) {
+                val staff = response.body()!!.map { it.toDomain() }
+                Result.success(staff)
+            } else {
+                Result.failure(Exception(parseError(response, "Error al obtener staff del workshop")))
+            }
+        } catch (e: HttpException) {
+            Result.failure(Exception(parseHttpException(e, "Error al obtener staff del workshop")))
         } catch (e: IOException) {
             Result.failure(Exception("Error de conexión: ${e.message}"))
         } catch (e: Exception) {

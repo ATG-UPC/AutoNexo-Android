@@ -24,13 +24,16 @@ import com.atg.autonexo.core.components.RoundedHeader
 import com.atg.autonexo.core.ui.theme.ButtonNavy
 import com.atg.autonexo.core.ui.theme.TextPrimary
 import com.atg.autonexo.core.ui.theme.TextSecondary
+import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
 
 @Composable
 fun MediaScreen(
     workshopId: Long,
     viewModel: MediaViewModel = hiltViewModel(),
     onNext: (workshopId: Long) -> Unit,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    currentRoute: String,
+    onNavigate: (route: String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -48,10 +51,16 @@ fun MediaScreen(
     LaunchedEffect(workshopId) {
         viewModel.loadWorkshopMedia()
     }
-
+    Scaffold (bottomBar = {
+        BottomNavigationBar(
+            currentRoute = currentRoute,
+            onNavigate = onNavigate
+        )
+    }){ innerPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(innerPadding)
     ) {
 
         RoundedHeader(
@@ -243,5 +252,6 @@ fun MediaScreen(
                 }
             }
         }
+    }
     }
 }
