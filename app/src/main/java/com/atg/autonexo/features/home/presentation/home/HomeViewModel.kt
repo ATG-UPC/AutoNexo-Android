@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.atg.autonexo.features.home.domain.usecases.GetHomeInfoUseCase
 import com.atg.autonexo.features.home.domain.usecases.LogoutUseCase
+import com.atg.autonexo.features.matching.domain.models.BookingStatus
+import com.atg.autonexo.features.matching.domain.usecases.GetMyBookingsUseCase
 import com.atg.autonexo.features.payment.domain.models.Payment
 import com.atg.autonexo.features.payment.domain.usecases.CreateSubscriptionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getHomeInfoUseCase: GetHomeInfoUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val logoutUseCase: LogoutUseCase,
+    private val getMyBookingsUseCase: GetMyBookingsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -28,8 +31,12 @@ class HomeViewModel @Inject constructor(
 
     fun loadHomeInfo() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                isLoadingServices = true,
+                errorMessage = null
+            )
+
             getHomeInfoUseCase()
                 .onSuccess { homeInfo ->
                     _uiState.value = _uiState.value.copy(
@@ -47,8 +54,28 @@ class HomeViewModel @Inject constructor(
                         errorMessage = exception.message
                     )
                 }
+
+            getMyBookingsUseCase()
+                .onSuccess { bookings ->
+                    val pickedUpBookings = bookings.filter { booking ->
+                        booking.status == BookingStatus.PICKED_UP
+                    }
+
+                    _uiState.value = _uiState.value.copy(
+                        servicesPickedUp = pickedUpBookings,
+                        isLoadingServices = false
+                    )
+                }
+                .onFailure { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        servicesPickedUp = emptyList(),
+                        isLoadingServices = false,
+                        errorMessage = exception.message ?: _uiState.value.errorMessage
+                    )
+                }
         }
     }
+
 
     fun refresh() {
         loadHomeInfo()

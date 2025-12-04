@@ -2,6 +2,7 @@ package com.atg.autonexo.features.home.presentation.home
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -13,7 +14,7 @@ sealed class BottomNavItem(
 ) {
     object Home : BottomNavItem("home", "Home", Icons.Default.Home)
     object Requests : BottomNavItem("home/requests", "Requests", Icons.Default.Mail)
-    object Services : BottomNavItem("home/services", "Services", Icons.Default.Build)
+    object Services : BottomNavItem("home/services", "Services", Icons.Default.DateRange)
     object WorkshopRegistration :
         BottomNavItem("workshop/registration/basic_info", "Workshop", Icons.Default.CarRepair)
 
