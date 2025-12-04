@@ -12,7 +12,7 @@ data class CreateOfferRequestDto (
     @SerializedName("currency")
     val currency: String,
     @SerializedName("proposedDate")
-    val proposedDate: LocalDateTime,
+    val proposedDate: String,
     @SerializedName("message")
     val message: String
 )

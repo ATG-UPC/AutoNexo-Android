@@ -9,11 +9,11 @@ data class Offer(
     val workshopId: Long,
     val proposedPriceAmount: BigDecimal,
     val currency: String,
-    val proposedDate: LocalDateTime?,
+    val proposedDate: LocalDateTime,
     val status: OfferStatus,
     val message: String,
     val createdAt: LocalDateTime,
-    val expiresAt: LocalDateTime?,
+    val expiresAt: LocalDateTime,
     val acceptedAt: LocalDateTime?,
     val withdrawAt: LocalDateTime?
 )
