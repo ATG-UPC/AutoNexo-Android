@@ -8,8 +8,8 @@ import java.time.format.DateTimeFormatter
 fun OfferResponseDto.toDomain(): Offer {
     val createdAt = parseDateTime(this.createdAt) ?: LocalDateTime.now()
     val withdrawAt = this.withdrawAt?.let { parseDateTime(it) }
-    val proposedDate = parseDateTime(this.proposedDate)
-    val expiresAt = this.expiresAt?.let { parseDateTime(it) }
+    val proposedDate = parseDateTime(this.proposedDate)  ?: LocalDateTime.now()
+    val expiresAt = parseDateTime(this.expiresAt)  ?: LocalDateTime.now()
     val acceptedAt = this.acceptedAt?.let { parseDateTime(it) }
 
     return Offer(

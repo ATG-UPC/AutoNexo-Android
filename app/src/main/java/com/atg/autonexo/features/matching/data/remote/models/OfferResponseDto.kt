@@ -24,7 +24,7 @@ data class OfferResponseDto(
     @SerializedName("createdAt")
     val createdAt: String,
     @SerializedName("expiresAt")
-    val expiresAt: String?,
+    val expiresAt: String,
     @SerializedName("acceptedAt")
     val acceptedAt: String?,
     @SerializedName("withdrawnAt")

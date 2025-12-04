@@ -44,7 +44,7 @@ class OfferRepositoryImpl @Inject constructor(
                 serviceRequestId = request.serviceRequestId,
                 proposedPriceAmount = request.proposedPriceAmount,
                 currency = request.currency,
-                proposedDate = request.proposedDate,
+                proposedDate = request.proposedDate.toString(),
                 message = request.message
             )
             val response = apiService.createOffer(dto)

@@ -9,17 +9,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +42,7 @@ import com.atg.autonexo.core.ui.theme.TextTertiary
 import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
 import com.atg.autonexo.features.matching.domain.models.Request
 import com.atg.autonexo.features.matching.domain.models.RequestStatus
+import com.atg.autonexo.features.matching.presentation.offer.OfferDialog
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
@@ -55,6 +57,9 @@ fun RequestsScreen(
     onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    var showOfferDialog by remember { mutableStateOf(false) }
+    var selectedRequestId by remember { mutableStateOf<Long?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -129,6 +134,17 @@ fun RequestsScreen(
                 }
 
                 else -> {
+
+                    if (showOfferDialog && selectedRequestId != null) {
+                        OfferDialog(
+                            serviceRequestId = selectedRequestId!!,
+                            onDismiss = { showOfferDialog = false },
+                            onSuccess = {
+                                showOfferDialog = false
+                            }
+                        )
+                    }
+
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize()
@@ -136,7 +152,13 @@ fun RequestsScreen(
                             .padding(bottom = padding.calculateBottomPadding())
                     ) {
                         items(uiState.requests) { request ->
-                            RequestCard(request)
+                            RequestCard(
+                                request = request,
+                                onOfferClick = { id ->
+                                    selectedRequestId = id
+                                    showOfferDialog = true
+                                }
+                            )
                         }
                     }
                 }
@@ -148,7 +170,10 @@ fun RequestsScreen(
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun RequestCard(request: Request) {
+fun RequestCard(
+    request: Request,
+    onOfferClick: (Long) -> Unit
+) {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     val createdText = request.createdAt.format(formatter)
     val matchPercent = (request.matchScore * 100).coerceIn(0.0, 100.0)
@@ -343,7 +368,7 @@ fun RequestCard(request: Request) {
 
                 Button(
                     onClick = {
-                        // TODO: acción para ofrecer servicio
+                        onOfferClick(request.id)
                     },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
