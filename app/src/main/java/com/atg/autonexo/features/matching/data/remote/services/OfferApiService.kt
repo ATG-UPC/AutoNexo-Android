@@ -12,7 +12,7 @@ import retrofit2.http.Path
 interface OfferApiService {
 
     // Recibir mis Offers
-    @GET("api/offers/my-requests")
+    @GET("api/offers/my-workshop")
     suspend fun getMyOffers(): Response<List<OfferResponseDto>>
 
     // Crear Offer
