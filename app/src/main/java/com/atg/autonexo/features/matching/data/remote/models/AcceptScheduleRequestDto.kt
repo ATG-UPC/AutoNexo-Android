@@ -5,5 +5,5 @@ import java.time.LocalDateTime
 
 data class AcceptScheduleRequestDto (
     @SerializedName("scheduledDate")
-    val newScheduledDate: LocalDateTime
+    val scheduledDate: String
 )

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -97,7 +98,7 @@ fun RequestsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Notifications,
+                    imageVector = Icons.Outlined.Mail,
                     contentDescription = null,
                     tint = Color.Black.copy(alpha = 0.7f),
                     modifier = Modifier.size(24.dp)
@@ -145,8 +146,6 @@ fun RequestsScreen(
                 }
 
                 else -> {
-
-                    // 🔹 Dialog para proponer oferta
                     if (showOfferDialog && selectedRequestId != null) {
                         OfferDialog(
                             serviceRequestId = selectedRequestId!!,
