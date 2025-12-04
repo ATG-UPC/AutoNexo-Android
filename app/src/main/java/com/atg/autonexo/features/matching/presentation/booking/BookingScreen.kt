@@ -1,19 +1,29 @@
-package com.atg.autonexo.features.matching.presentation.requests
+package com.atg.autonexo.features.matching.presentation.booking
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Api
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -23,7 +33,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,30 +56,25 @@ import com.atg.autonexo.core.ui.theme.IconGray
 import com.atg.autonexo.core.ui.theme.StatusCancelledColor
 import com.atg.autonexo.core.ui.theme.StatusCompletedColor
 import com.atg.autonexo.core.ui.theme.StatusPendingColor
-import com.atg.autonexo.core.ui.theme.StatusRejectedColor
+import com.atg.autonexo.core.ui.theme.StatusPendingToScheduleColor
 import com.atg.autonexo.core.ui.theme.TextPrimary
 import com.atg.autonexo.core.ui.theme.TextSecondary
 import com.atg.autonexo.core.ui.theme.TextTertiary
 import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
-import com.atg.autonexo.features.matching.domain.models.Request
-import com.atg.autonexo.features.matching.domain.models.RequestStatus
-import com.atg.autonexo.features.matching.presentation.offer.OfferDialog
+import com.atg.autonexo.features.matching.domain.models.Booking
+import com.atg.autonexo.features.matching.domain.models.BookingStatus
+import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import kotlin.math.roundToInt
 
 @Composable
-fun RequestsScreen(
-    viewModel: RequestsViewModel = hiltViewModel(),
+fun BookingScreen(
+    viewModel: BookingViewModel = hiltViewModel(),
     onNavigate: (String) -> Unit,
     currentRoute: String,
     onBack: () -> Unit = {}
-) {
+){
     val uiState by viewModel.uiState.collectAsState()
-
-    var showOfferDialog by remember { mutableStateOf(false) }
-    var selectedRequestId by remember { mutableStateOf<Long?>(null) }
-    var selectedRequest by remember { mutableStateOf<Request?>(null) }
+    var selectedBooking by remember { mutableStateOf<Booking?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -85,10 +89,11 @@ fun RequestsScreen(
                 .fillMaxSize()
                 .padding(top = 0.dp)
         ) {
-            RoundedHeader("Requests", onBack = onBack)
+            RoundedHeader("Booking Services", onBack = onBack)
 
             Spacer(Modifier.height(8.dp))
 
+            // HEADER GENERAL: TOTAL
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,19 +102,19 @@ fun RequestsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.Notifications,
+                    imageVector = Icons.Outlined.Build,
                     contentDescription = null,
                     tint = Color.Black.copy(alpha = 0.7f),
                     modifier = Modifier.size(24.dp)
                 )
                 Text(
-                    text = "Total Requests",
+                    text = "Total Booking Services",
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary
                 )
 
                 Text(
-                    text = "${uiState.requests.size}",
+                    text = "${uiState.bookings.size}",
                     style = MaterialTheme.typography.titleMedium,
                     color = TextSecondary
                 )
@@ -132,31 +137,33 @@ fun RequestsScreen(
                 }
 
                 uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage ?: "Error",
-                        color = Color.Red
-                    )
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text(
+                            text = uiState.errorMessage ?: "Error",
+                            color = Color.Red
+                        )
+                    }
                 }
 
-                uiState.requests.isEmpty() -> {
+                uiState.bookings.isEmpty() -> {
                     Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text("No hay solicitudes", color = TextSecondary)
+                        Text("No hay bookings", color = TextSecondary)
                     }
                 }
 
                 else -> {
 
-                    // 🔹 Dialog para proponer oferta
-                    if (showOfferDialog && selectedRequestId != null) {
-                        OfferDialog(
-                            serviceRequestId = selectedRequestId!!,
-                            onDismiss = { showOfferDialog = false },
-                            onSuccess = { requestId ->
-                                showOfferDialog = false
-                            }
+                    val groupedByStatus = uiState.bookings.groupBy { it.status }
 
-                        )
-                    }
+                    val statusOrder = listOf(
+                        BookingStatus.PENDING_SCHEDULE,
+                        BookingStatus.SCHEDULED,
+                        BookingStatus.PENDING_PICKUP,
+                        BookingStatus.IN_PROGRESS,
+                        BookingStatus.COMPLETED,
+                        BookingStatus.PICKED_UP,
+                        BookingStatus.CANCELLED
+                    )
 
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -165,28 +172,48 @@ fun RequestsScreen(
                             .padding(horizontal = 16.dp)
                             .padding(bottom = padding.calculateBottomPadding())
                     ) {
-                        items(uiState.requests) { request ->
-                            RequestCard(
-                                request = request,
-                                onOfferClick = { id ->
-                                    selectedRequestId = id
-                                    showOfferDialog = true
-                                },
-                                onDetailsClick = { r ->
-                                    selectedRequest = r
+                        statusOrder.forEach { status ->
+                            val bookingsForStatus = groupedByStatus[status]
+                            if (!bookingsForStatus.isNullOrEmpty()) {
+
+                                // Encabezado por estado
+                                item(key = "header_${status.name}") {
+                                    BookingStatusHeader(
+                                        status = status,
+                                        count = bookingsForStatus.size
+                                    )
+                                    Spacer(Modifier.height(8.dp))
                                 }
-                            )
+
+                                // Items de ese estado
+                                items(
+                                    items = bookingsForStatus,
+                                    key = { it.id }
+                                ) { booking ->
+                                    BookingCard(
+                                        booking = booking,
+                                        onBookingClick = { clicked ->
+                                            selectedBooking = clicked
+                                        }
+                                    )
+                                }
+
+                                // Separación entre grupos
+                                item(key = "spacer_${status.name}") {
+                                    Spacer(Modifier.height(16.dp))
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Popup de detalles del Request
-        if (selectedRequest != null) {
-            RequestDetailsDialog(
-                request = selectedRequest!!,
-                onDismiss = { selectedRequest = null }
+        // Popup de detalles
+        if (selectedBooking != null) {
+            BookingDetailsDialog(
+                booking = selectedBooking!!,
+                onDismiss = { selectedBooking = null }
             )
         }
     }
@@ -194,15 +221,22 @@ fun RequestsScreen(
 
 @SuppressLint("DefaultLocale")
 @Composable
-fun RequestCard(
-    request: Request,
-    onOfferClick: (Long) -> Unit,
-    onDetailsClick: (Request) -> Unit
+fun BookingCard(
+    booking: Booking,
+    onBookingClick: (Booking) -> Unit = {},
 ) {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
-    val createdText = request.createdAt.format(formatter)
-    val matchPercent = (request.matchScore * 100).coerceIn(0.0, 100.0)
-    val distanceText = String.format(Locale.getDefault(), "%.1f km", request.distanceKm)
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+    val scheduledText = booking.scheduledDate.format(dateFormatter)
+    val createdText = booking.createdAt.format(dateFormatter)
+
+    // Mostrar precio final si existe, si no, el propuesto
+    val priceToShow = if (booking.finalPriceAmount > BigDecimal.ZERO) {
+        booking.finalPriceAmount
+    } else {
+        booking.proposedPriceAmount
+    }
+    val currencyLabel = booking.currency ?: ""
+    val priceText = "$currencyLabel $priceToShow"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -218,7 +252,7 @@ fun RequestCard(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -235,8 +269,8 @@ fun RequestCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.DirectionsCar,
-                            contentDescription = "Vehículo",
+                            imageVector = Icons.Filled.DateRange,
+                            contentDescription = "Booking vehicle",
                             tint = Color.White
                         )
                     }
@@ -245,42 +279,40 @@ fun RequestCard(
 
                     Column {
                         Text(
-                            text = "Request #${request.id}",
+                            text = "Booking #${booking.id}",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontSize = 16.sp
                             ),
                             color = TextPrimary
                         )
-                        /*
                         Text(
-                            text = "Vehículo ID: ${request.vehicleId}",
+                            text = "Scheduled: $scheduledText",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontSize = 12.sp
                             ),
-                            color = TextTertiary
+                            color = TextSecondary
                         )
-                         */
                     }
                 }
 
-                StatusBadge(status = request.status)
+                StatusBadge(status = booking.status)
             }
 
             // Servicios solicitados
-            if (request.requestedServices.isNotEmpty()) {
+            if (booking.requestedServices.isNotEmpty()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    request.requestedServices.forEach { service ->
+                    booking.requestedServices.forEach { service ->
                         Surface(
                             color = Color(0xFFE4EAF3),
                             shape = RoundedCornerShape(999.dp)
                         ) {
                             Text(
-                                text = service,
+                                text = service?.name.orEmpty(),
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                                 color = TextSecondary
@@ -291,9 +323,9 @@ fun RequestCard(
             }
 
             // Descripción
-            if (request.description.isNotBlank()) {
+            if (booking.description.isNotBlank()) {
                 Text(
-                    text = request.description.ifBlank { "Sin descripción" },
+                    text = booking.description,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 14.sp
                     ),
@@ -301,59 +333,31 @@ fun RequestCard(
                 )
             }
 
-            // Match, distancia, fecha
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Match score
+                // Precio
                 Column {
                     Text(
-                        text = "Coincidencia",
+                        text = "Price",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextTertiary
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "${matchPercent.roundToInt()}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextPrimary
-                        )
-                    }
-                }
-
-                // Distancia
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
                     Text(
-                        text = "Distancia",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextTertiary
+                        text = priceText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = null,
-                            tint = IconGray,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = distanceText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextPrimary
-                        )
-                    }
                 }
 
-                // Fecha creación
+                // Fecha de creación
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "Creado",
+                        text = "Created",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextTertiary
                     )
@@ -374,33 +378,20 @@ fun RequestCard(
                 }
             }
 
-            // Botones
+            // Botón Details
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                OutlinedButton(
-                    onClick = { onDetailsClick(request) },
-                    modifier = Modifier.weight(1f),
-                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp)
-                ) {
-                    Text(
-                        text = "Detalles",
-                        color = ButtonNavy
-                    )
-                }
-
                 Button(
-                    onClick = {
-                        onOfferClick(request.id)
-                    },
-                    modifier = Modifier.weight(1f),
+                    onClick = { onBookingClick(booking) },
+                    modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = ButtonNavy,
                         contentColor = Color.White
                     )
                 ) {
-                    Text("Proponer oferta")
+                    Text("Details")
                 }
             }
         }
@@ -408,16 +399,60 @@ fun RequestCard(
 }
 
 @Composable
-private fun StatusBadge(status: RequestStatus) {
+private fun BookingStatusHeader(
+    status: BookingStatus,
+    count: Int
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Outlined.Api,
+                contentDescription = null,
+                tint = Color.Black.copy(alpha = 0.7f),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = status.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimary
+            )
+        }
+
+        Text(
+            text = "$count",
+            style = MaterialTheme.typography.titleMedium,
+            color = TextSecondary
+        )
+    }
+}
+
+@Composable
+fun StatusBadge(status: BookingStatus) {
     val (bgColor, textColor) = when (status) {
-        RequestStatus.PENDING ->
+        BookingStatus.PENDING_SCHEDULE ->
+            StatusPendingToScheduleColor.copy(alpha = 0.18f) to StatusPendingToScheduleColor
+        BookingStatus.SCHEDULED ->
             StatusPendingColor.copy(alpha = 0.18f) to StatusPendingColor
-        RequestStatus.COMPLETED ->
+
+        BookingStatus.IN_PROGRESS ->
+            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) to MaterialTheme.colorScheme.primary
+
+        BookingStatus.COMPLETED,
+        BookingStatus.PICKED_UP ->
             StatusCompletedColor.copy(alpha = 0.18f) to StatusCompletedColor
-        RequestStatus.CANCELLED ->
+
+        BookingStatus.PENDING_PICKUP ->
+            StatusPendingColor.copy(alpha = 0.18f) to StatusPendingColor
+
+        BookingStatus.CANCELLED ->
             StatusCancelledColor.copy(alpha = 0.18f) to StatusCancelledColor
-        RequestStatus.REJECTED ->
-            StatusRejectedColor.copy(alpha = 0.18f) to StatusRejectedColor
     }
 
     Surface(
@@ -436,15 +471,25 @@ private fun StatusBadge(status: RequestStatus) {
 }
 
 @Composable
-fun RequestDetailsDialog(
-    request: Request,
+fun BookingDetailsDialog(
+    booking: Booking,
     onDismiss: () -> Unit
 ) {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
-    val createdText = request.createdAt.format(formatter)
-    val matchPercent = (request.matchScore * 100).coerceIn(0.0, 100.0)
-    val distanceText = String.format("%.1f km", request.distanceKm)
-    val coordsText = "Lat: ${request.latitude}, Lng: ${request.longitude}"
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+
+    val scheduledText = booking.scheduledDate.format(dateFormatter)
+    val createdText = booking.createdAt.format(dateFormatter)
+    val completedText = booking.completedAt?.format(dateFormatter)
+    val pickedUpText = booking.pickedUpAt?.format(dateFormatter)
+    val cancelledText = booking.cancelledAt?.format(dateFormatter)
+
+    val priceToShow = if (booking.finalPriceAmount > BigDecimal.ZERO) {
+        booking.finalPriceAmount
+    } else {
+        booking.proposedPriceAmount
+    }
+    val currencyLabel = booking.currency ?: ""
+    val priceText = "$currencyLabel $priceToShow"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -464,14 +509,14 @@ fun RequestDetailsDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.DirectionsCar,
+                    imageVector = Icons.Filled.DateRange,
                     contentDescription = null,
                     tint = ButtonNavy,
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Request #${request.id}",
+                    text = "Booking #${booking.id}",
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -491,19 +536,25 @@ fun RequestDetailsDialog(
                         style = MaterialTheme.typography.labelMedium,
                         color = TextTertiary
                     )
-                    StatusBadge(status = request.status)
+                    StatusBadge(status = booking.status)
                 }
 
                 Divider()
 
-                InfoRow(label = "Vehicle ID", value = request.vehicleId.toString())
+                // Fechas
+                InfoRow(label = "Scheduled", value = scheduledText)
                 InfoRow(label = "Created", value = createdText)
-                InfoRow(label = "Match", value = "${matchPercent.roundToInt()}%")
-                InfoRow(label = "Distance", value = distanceText)
-                InfoRow(label = "Location", value = coordsText)
+                completedText?.let { InfoRow(label = "Completed", value = it) }
+                pickedUpText?.let { InfoRow(label = "Picked up", value = it) }
+                cancelledText?.let { InfoRow(label = "Cancelled", value = it) }
 
-                if (request.requestedServices.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
+                Divider()
+
+                // Precio
+                InfoRow(label = "Price", value = priceText)
+
+                // Servicios
+                if (booking.requestedServices.isNotEmpty()) {
                     Text(
                         text = "Services",
                         style = MaterialTheme.typography.labelMedium,
@@ -513,13 +564,13 @@ fun RequestDetailsDialog(
                     Column(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        request.requestedServices.forEach { service ->
+                        booking.requestedServices.forEach { service ->
                             Surface(
                                 color = Color(0xFFE4EAF3),
                                 shape = RoundedCornerShape(999.dp)
                             ) {
                                 Text(
-                                    text = service,
+                                    text = service?.name.orEmpty(),
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                                     color = TextSecondary
@@ -529,7 +580,8 @@ fun RequestDetailsDialog(
                     }
                 }
 
-                if (request.description.isNotBlank()) {
+                // Descripción
+                if (booking.description.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = "Description",
@@ -537,7 +589,22 @@ fun RequestDetailsDialog(
                         color = TextTertiary
                     )
                     Text(
-                        text = request.description,
+                        text = booking.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimary
+                    )
+                }
+
+                // Cancel reason
+                if (!booking.cancelledReason.isNullOrBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Cancel reason",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextTertiary
+                    )
+                    Text(
+                        text = booking.cancelledReason.orEmpty(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextPrimary
                     )

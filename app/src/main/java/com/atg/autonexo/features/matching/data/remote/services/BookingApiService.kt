@@ -11,19 +11,19 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface BookingApiService {
-    @GET("api/service-bookings")
+    @GET("api/v1/service-bookings")
     suspend fun getMyBookings(): Response<List<BookingResponseDto>>
-    @POST("api/service-bookings/{id}/confirm-schedule")
+    @POST("api/v1/service-bookings/{id}/confirm-schedule")
     suspend fun acceptScheduleChange(
         @Path("id") bookingId: Long,
         @Body request: AcceptScheduleRequestDto
     ): Response<BookingResponseDto>
-    @POST("api/service-bookings/{id}/complete")
+    @POST("api/v1/service-bookings/{id}/complete")
     suspend fun completeBooking(
         @Path("id") bookingId: Long,
         @Body request: CompleteBookingRequestDto
     ): Response<BookingResponseDto>
-    @DELETE("api/service-bookings/{id}")
+    @DELETE("api/v1/service-bookings/{id}")
     suspend fun cancelBooking(
         @Path("id") bookingId: Long
     ): Response<Unit>

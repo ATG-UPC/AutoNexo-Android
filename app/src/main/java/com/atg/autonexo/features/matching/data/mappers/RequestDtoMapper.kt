@@ -11,8 +11,10 @@ fun RequestResponseDto.toDomain(): Request {
     return Request(
         id = id,
         vehicleId = vehicleId,
-        requestedServices = requestedServices,
-        description = description,
+        requestedServices = requestedServices
+            ?.filterNotNull()
+            ?: emptyList(),
+        description = description ?: "",
         matchScore = matchScore,
         latitude = userLocation.latitude,
         longitude = userLocation.longitude,

@@ -20,6 +20,7 @@ import com.atg.autonexo.features.workshop.presentation.invitation.InviteEmployee
 import com.atg.autonexo.features.workshop.presentation.invitation.AcceptInvitationScreen
 import com.atg.autonexo.features.workshop.presentation.invitation.InvitationCodeDisplayScreen
 import com.atg.autonexo.features.home.presentation.home.HomeScreen
+import com.atg.autonexo.features.matching.presentation.booking.BookingScreen
 import com.atg.autonexo.features.matching.presentation.requests.RequestsScreen
 import com.atg.autonexo.features.payment.presentation.payment.PaymentScreen
 import com.atg.autonexo.features.profile.presentation.ProfileScreen
@@ -148,19 +149,17 @@ fun AppNavigation(
                 }
             )
         }
-        
+
+        // BOOKING SERVICES
         composable(Route.HomeNav.Services.route) {
-            HomeScreen(
-                currentRoute = Route.HomeNav.Services.route,
-                onNavigate = { route ->
-                    navController.navigate(route)
-                },
-                onLogout = {
-                    navController.navigate(Route.Auth.Login.route) {
-                        popUpTo(Route.Home.route) { inclusive = true }
-                    }
-                }
-            )
+            BookingScreen(
+            currentRoute = Route.HomeNav.Services.route,
+            onNavigate = { route ->
+                navController.navigate(route)
+            }, onBack = {
+                navController.popBackStack()
+            }
+        )
         }
 
         // REQUEST
