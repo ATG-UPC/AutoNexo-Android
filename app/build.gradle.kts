@@ -7,6 +7,7 @@ plugins {
 
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt) // hilt
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -116,7 +117,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     // Core Library Desugaring (para java.time en API < 26)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // Google Maps
     implementation(libs.maps.compose)
@@ -126,5 +127,12 @@ dependencies {
 
     // Accompanist Permissions
     implementation(libs.accompanist.permissions)
+
+    // BOM de Firebase: asegura compatibilidad entre todas las libs
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+
+    // Dependencias de Firebase que usarás
+    // Esta es opcional, pero recomendamos poner analytics
+    implementation("com.google.firebase:firebase-analytics")
 
 }
