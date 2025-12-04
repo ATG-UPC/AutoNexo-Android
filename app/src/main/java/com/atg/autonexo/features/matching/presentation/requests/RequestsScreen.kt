@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
@@ -26,6 +27,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.atg.autonexo.core.components.RoundedHeader
+import com.atg.autonexo.core.ui.theme.ButtonNavy
+import com.atg.autonexo.core.ui.theme.CardBackground
+import com.atg.autonexo.core.ui.theme.IconGray
+import com.atg.autonexo.core.ui.theme.StatusCancelledColor
+import com.atg.autonexo.core.ui.theme.StatusCompletedColor
+import com.atg.autonexo.core.ui.theme.StatusPendingColor
+import com.atg.autonexo.core.ui.theme.StatusRejectedColor
+import com.atg.autonexo.core.ui.theme.TextPrimary
+import com.atg.autonexo.core.ui.theme.TextSecondary
+import com.atg.autonexo.core.ui.theme.TextTertiary
 import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
 import com.atg.autonexo.features.matching.domain.models.Request
 import com.atg.autonexo.features.matching.domain.models.RequestStatus
@@ -33,27 +45,18 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 // Colores base (alineados al Home)
-private val TextPrimary = Color(0xFF333333)
-private val TextSecondary = Color(0xFF555555)
-private val TextTertiary = Color(0xFF767676)
-private val CardBackground = Color(0xFFFFFFFF)
-private val ButtonNavy = Color(0xFF1F2D40)
-private val IconGray = Color(0xFFA7A7A7)
-private val StatusPendingColor = Color(0xFFFFC107)
-private val StatusCompletedColor = Color(0xFF4CAF50)
-private val StatusCancelledColor = Color(0xFF8C1C1C)
-private val StatusRejectedColor = Color(0xFFB0B0B0)
+
 
 @Composable
 fun RequestsScreen(
     viewModel: RequestsViewModel = hiltViewModel(),
     onNavigate: (String) -> Unit,
-    currentRoute: String
+    currentRoute: String,
+    onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = { RequestTopBar() },
         bottomBar = {
             BottomNavigationBar(
                 currentRoute = currentRoute,
@@ -61,18 +64,19 @@ fun RequestsScreen(
             )
         }
     ) { padding ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
+                .padding(top = 0.dp)
+
         ) {
+            RoundedHeader("Requests", onBack = onBack)
 
             Spacer(Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -128,6 +132,8 @@ fun RequestsScreen(
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = padding.calculateBottomPadding())
                     ) {
                         items(uiState.requests) { request ->
                             RequestCard(request)
@@ -139,13 +145,6 @@ fun RequestsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RequestTopBar() {
-    TopAppBar(
-        title = { Text("Requests") },
-    )
-}
 
 @SuppressLint("DefaultLocale")
 @Composable
