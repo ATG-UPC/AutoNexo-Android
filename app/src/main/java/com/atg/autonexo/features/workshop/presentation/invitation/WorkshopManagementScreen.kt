@@ -23,6 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.atg.autonexo.features.workshop.domain.models.WorkshopStaff
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,13 +54,9 @@ fun WorkshopManagementScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Gestión del Taller") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Atrás")
-                    }
-                }
+            com.atg.autonexo.core.components.RoundedHeader(
+                title = "Gestión del Taller",
+                onBack = onBack
             )
         }
     ) { paddingValues ->
@@ -66,14 +64,13 @@ fun WorkshopManagementScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
+            // HEADER DEL WORKSHOP
             item {
                 when {
                     uiState.isLodingWorkshop -> {
-                        // mientras está cargando
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -83,14 +80,12 @@ fun WorkshopManagementScreen(
                             CircularProgressIndicator()
                         }
                     }
-
-                    // cuando ya terminó de cargar el workshop
                     else -> {
                         WorkshopHeader(
                             name = uiState.workshopName,
                             rating = uiState.trustScore ?: 0f,
                             city = uiState.city ?: "",
-                            state = uiState.state?: "",
+                            state = uiState.state ?: "",
                             address = (uiState.street + " " + uiState.zip),
                             shortDescription = uiState.workshopShortDescription,
                             logoUrl = uiState.logoUrl,
@@ -100,7 +95,7 @@ fun WorkshopManagementScreen(
                 }
             }
 
-            // Tags
+            // TAGS
             item {
                 when {
                     uiState.isLodingWorkshop -> {
@@ -113,27 +108,28 @@ fun WorkshopManagementScreen(
                             CircularProgressIndicator()
                         }
                     }
+
                     uiState.capabilityTags.isNotEmpty() -> {
-                        ServiceTagsRow(
-                            tags = uiState.capabilityTags
-                        )
+                        ServiceTagsRow(tags = uiState.capabilityTags)
                     }
+
                     else -> {
                         Text(
                             text = "No hay tags registradas",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = com.atg.autonexo.core.ui.theme.TextSecondary
                         )
                     }
                 }
             }
 
-            // Código de Invitación
+            // CÓDIGO DE INVITACIÓN
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                        containerColor = com.atg.autonexo.core.ui.theme.CardBackground
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
@@ -144,20 +140,22 @@ fun WorkshopManagementScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Código de Invitación",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            text = "Código de invitación",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = com.atg.autonexo.core.ui.theme.TextPrimary,
+                            fontWeight = FontWeight.SemiBold
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         if (uiState.isLoading) {
                             CircularProgressIndicator()
                         } else {
                             Text(
                                 text = uiState.invitationCode ?: "Cargando...",
-                                style = MaterialTheme.typography.displaySmall,
+                                style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
+                                color = com.atg.autonexo.core.ui.theme.ButtonNavy,
                                 letterSpacing = 4.sp
                             )
                         }
@@ -175,7 +173,11 @@ fun WorkshopManagementScreen(
                                     }
                                 },
                                 modifier = Modifier.weight(1f),
-                                enabled = uiState.invitationCode != null && !uiState.isLoading
+                                enabled = uiState.invitationCode != null && !uiState.isLoading,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = com.atg.autonexo.core.ui.theme.ButtonNavy,
+                                    contentColor = Color.White
+                                )
                             ) {
                                 Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -189,7 +191,11 @@ fun WorkshopManagementScreen(
                                     }
                                 },
                                 modifier = Modifier.weight(1f),
-                                enabled = uiState.invitationCode != null && !uiState.isLoading
+                                enabled = uiState.invitationCode != null && !uiState.isLoading,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = com.atg.autonexo.core.ui.theme.ButtonNavy,
+                                    contentColor = Color.White
+                                )
                             ) {
                                 Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -199,67 +205,30 @@ fun WorkshopManagementScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        Button(
+                        OutlinedButton(
                             onClick = { onInviteEmployee(workshopId) },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp)
                         ) {
                             Icon(Icons.Default.PersonAdd, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Invitar Empleado")
+                            Text("Invitar empleado")
                         }
                     }
                 }
             }
-
-            // Estadísticas de Empleados
-            /*
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Empleados",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            StatCard(
-                                title = "Total",
-                                value = uiState.totalEmployeesCount.toString(),
-                                modifier = Modifier.weight(1f)
-                            )
-                            StatCard(
-                                title = "Activos",
-                                value = uiState.activeEmployeesCount.toString(),
-                                modifier = Modifier.weight(1f),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
-            */
-
-            // Lista de Empleados
+/*
+            // TÍTULO LISTA EMPLEADOS
             item {
                 Text(
-                    text = "Lista de Empleados",
+                    text = "Lista de empleados",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold,
+                    color = com.atg.autonexo.core.ui.theme.TextPrimary
                 )
             }
 
+            // ESTADOS EMPLEADOS
             if (uiState.isLoadingEmployees) {
                 item {
                     Box(
@@ -274,7 +243,11 @@ fun WorkshopManagementScreen(
             } else if (uiState.employees.isEmpty()) {
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = com.atg.autonexo.core.ui.theme.CardBackground
+                        )
                     ) {
                         Column(
                             modifier = Modifier
@@ -286,13 +259,13 @@ fun WorkshopManagementScreen(
                                 Icons.Default.Person,
                                 null,
                                 modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = com.atg.autonexo.core.ui.theme.TextTertiary
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 text = "No hay empleados registrados",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = com.atg.autonexo.core.ui.theme.TextSecondary
                             )
                         }
                     }
@@ -302,20 +275,24 @@ fun WorkshopManagementScreen(
                     EmployeeCard(
                         employee = employee,
                         onToggleActive = { isActive ->
-                            uiState.workshopId?.let { workshopId ->
+                            uiState.workshopId?.let { id ->
                                 if (isActive) {
-                                    viewModel.activateEmployee(workshopId, employee.id)
+                                    viewModel.activateEmployee(id, employee.id)
                                 } else {
-                                    viewModel.deactivateEmployee(workshopId, employee.id)
+                                    viewModel.deactivateEmployee(id, employee.id)
                                 }
                             }
                         }
                     )
                 }
             }
+             */
+
         }
+
     }
 }
+
 
 @Composable
 fun StatCard(
@@ -353,11 +330,16 @@ fun StatCard(
 
 @Composable
 fun EmployeeCard(
-    employee: com.atg.autonexo.features.workshop.domain.models.WorkshopEmployee,
+    employee: WorkshopStaff,
     onToggleActive: (Boolean) -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = com.atg.autonexo.core.ui.theme.CardBackground
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -368,19 +350,23 @@ fun EmployeeCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = employee.email,
+                    text = employee.userId.toString(),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = com.atg.autonexo.core.ui.theme.TextPrimary
                 )
+                /*
                 if (employee.firstName != null || employee.lastName != null) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${employee.firstName ?: ""} ${employee.lastName ?: ""}".trim(),
+                        text = "${employee.firstName.orEmpty()} ${employee.lastName.orEmpty()}".trim(),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = com.atg.autonexo.core.ui.theme.TextSecondary
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -389,38 +375,40 @@ fun EmployeeCard(
                         onClick = { },
                         label = { Text(employee.role) }
                     )
-                    if (employee.active) {
-                        AssistChip(
-                            onClick = { },
-                            label = { Text("Activo") },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
+
+                    AssistChip(
+                        onClick = { },
+                        label = { Text(if (employee.active) "Activo" else "Inactivo") },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = if (employee.active)
+                                MaterialTheme.colorScheme.primaryContainer
+                            else
+                                MaterialTheme.colorScheme.errorContainer
                         )
-                    } else {
-                        AssistChip(
-                            onClick = { },
-                            label = { Text("Inactivo") },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            )
-                        )
-                    }
+                    )
                 }
             }
-            
+
             IconButton(
                 onClick = { onToggleActive(!employee.active) }
             ) {
                 Icon(
-                    if (employee.active) Icons.Default.Block else Icons.Default.CheckCircle,
-                    if (employee.active) "Desactivar" else "Activar",
-                    tint = if (employee.active) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    imageVector = if (employee.active) Icons.Default.Block else Icons.Default.CheckCircle,
+                    contentDescription = if (employee.active) "Desactivar" else "Activar",
+                    tint = if (employee.active)
+                        MaterialTheme.colorScheme.error
+                    else
+                        com.atg.autonexo.core.ui.theme.ButtonNavy
                 )
+
+                 */
             }
+
+
         }
     }
 }
+
 
 private fun copyToClipboard(text: String, context: Context) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -446,8 +434,7 @@ fun ServiceTagsRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 4.dp),
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -464,19 +451,20 @@ fun ServiceTag(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        shape = RoundedCornerShape(999.dp),
+        color = Color(0xFFE4EAF3)
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+            color = com.atg.autonexo.core.ui.theme.TextSecondary,
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
+
 
 @Composable
 fun WorkshopHeader(
@@ -493,6 +481,9 @@ fun WorkshopHeader(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = com.atg.autonexo.core.ui.theme.CardBackground
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
         Column {

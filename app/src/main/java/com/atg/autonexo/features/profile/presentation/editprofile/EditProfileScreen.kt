@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 
 // Colores del diseño Figma
-private val HeaderGradientTop = Color(0xFF0E2A47)
-private val HeaderGradientBottom = Color(0xFF1D3F63)
+private val HeaderGradientTop = Color(0xFF1E2B36)
+private val HeaderGradientBottom = Color(0xFF253442)
 private val TextPrimary = Color(0xFF333333)
 private val TextSecondary = Color(0xFF3D5A80)
 private val CardBackground = Color(0xFFFFFFFF)

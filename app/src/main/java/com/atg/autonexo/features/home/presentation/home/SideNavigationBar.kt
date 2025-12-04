@@ -67,7 +67,7 @@ fun SideNavigationBar(
         )
 
         Spacer(modifier = Modifier.height(20.dp))
-
+/*
         // Support and Assistance
         DrawerMenuItem(
             icon = Icons.Default.Phone,
@@ -100,7 +100,7 @@ fun SideNavigationBar(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-
+*/
         // Language Selector
         Column(
             modifier = Modifier

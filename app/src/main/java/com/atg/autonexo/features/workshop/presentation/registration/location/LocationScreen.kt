@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.atg.autonexo.core.components.RoundedHeader
 import com.atg.autonexo.core.ui.theme.ButtonNavy
 import com.atg.autonexo.core.ui.theme.TextTertiary
+import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -31,7 +32,9 @@ fun LocationScreen(
     workshopId: Long,
     viewModel: LocationViewModel = hiltViewModel(),
     onFinish: (workshopName: String) -> Unit,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    currentRoute: String,
+    onNavigate: (route: String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -59,11 +62,17 @@ fun LocationScreen(
     LaunchedEffect(workshopId) {
         viewModel.loadWorkshopLocation(workshopId)
     }
-
+    Scaffold (bottomBar = {
+        BottomNavigationBar(
+            currentRoute = currentRoute,
+            onNavigate = onNavigate
+        )
+    }){ innerPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(innerPadding)
     ) {
 
         RoundedHeader(
@@ -72,7 +81,6 @@ fun LocationScreen(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-
 
         Card(
             modifier = Modifier
@@ -311,6 +319,7 @@ fun LocationScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
     }
 }
 

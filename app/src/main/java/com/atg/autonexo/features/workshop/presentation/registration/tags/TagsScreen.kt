@@ -21,6 +21,7 @@ import com.atg.autonexo.core.ui.theme.ButtonNavy
 import com.atg.autonexo.core.ui.theme.CardBackground
 import com.atg.autonexo.core.ui.theme.TextPrimary
 import com.atg.autonexo.core.ui.theme.TextSecondary
+import com.atg.autonexo.features.home.presentation.home.BottomNavigationBar
 import com.atg.autonexo.features.workshop.domain.models.TagCategory
 @Composable
 fun TagsScreen(
@@ -28,7 +29,9 @@ fun TagsScreen(
     initialSelectedTagCodes: Set<String> = emptySet(),
     viewModel: TagsViewModel = hiltViewModel(),
     onNext: (workshopId: Long) -> Unit,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    currentRoute: String,
+    onNavigate: (route: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -36,9 +39,16 @@ fun TagsScreen(
         viewModel.loadWorkshopTags()
     }
 
+    Scaffold (bottomBar = {
+        BottomNavigationBar(
+            currentRoute = currentRoute,
+            onNavigate = onNavigate
+        )
+    }){ innerPadding  ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(innerPadding)
     ) {
 
         // HEADER
@@ -110,6 +120,7 @@ fun TagsScreen(
                 }
             }
         }
+    }
     }
 }
 
