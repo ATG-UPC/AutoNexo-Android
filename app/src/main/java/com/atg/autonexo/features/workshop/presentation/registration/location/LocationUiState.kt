@@ -24,6 +24,7 @@ data class LocationUiState(
     val longitude: Double = 0.0,
     val selectedLocation: LatLng? = null,
     val isLoading: Boolean = false,
+    val isGeocoding: Boolean = false, // Estado de carga de geocoding
     val errorMessage: String? = null
 )
 

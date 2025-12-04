@@ -38,12 +38,6 @@ fun LocationScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val showLabel = uiState.ogState.isBlank() &&
-            uiState.ogCity.isBlank() &&
-            uiState.ogStreet.isBlank() &&
-            uiState.ogCountry.isBlank() &&
-            !uiState.isLoading
-
     val defaultLocation = LatLng(-12.0464, -77.0428)
     val initialLocation = uiState.selectedLocation ?: defaultLocation
 
@@ -80,8 +74,9 @@ fun LocationScreen(
             onBack = onBack
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
+        // Mapa más grande y prominente
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,7 +87,7 @@ fun LocationScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp)
+                    .height(400.dp)
             ) {
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
@@ -103,7 +98,7 @@ fun LocationScreen(
                         isMyLocationEnabled = false
                     ),
                     uiSettings = MapUiSettings(
-                        zoomControlsEnabled = false,
+                        zoomControlsEnabled = true,
                         myLocationButtonEnabled = false,
                         mapToolbarEnabled = false
                     )
@@ -116,7 +111,33 @@ fun LocationScreen(
                     }
                 }
 
-                if (uiState.selectedLocation == null &&
+                // Indicador de carga de geocoding
+                if (uiState.isGeocoding) {
+                    Surface(
+                        color = Color.White.copy(alpha = 0.9f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(24.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = ButtonNavy
+                            )
+                            Text(
+                                text = "Obteniendo dirección...",
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextTertiary
+                            )
+                        }
+                    }
+                } else if (uiState.selectedLocation == null &&
                     uiState.ogLatitude == null &&
                     uiState.ogLongitude == null
                 ) {
@@ -139,8 +160,9 @@ fun LocationScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
+        // Campos simplificados - solo esenciales
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -154,24 +176,22 @@ fun LocationScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Text(
+                    text = "Dirección (completada automáticamente)",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = TextTertiary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
-                // Calle
+                // Calle (opcional, se completa automáticamente)
                 OutlinedTextField(
                     value = uiState.street,
                     onValueChange = viewModel::updateStreet,
-                    trailingIcon = {
-                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
-                    },
-                    label = {
-                        if (showLabel) Text("Calle *")
-                        else Text("Editar Calle del Workshop")
-                    },
-                    placeholder = {
-                        if (!showLabel && uiState.ogStreet.isNotBlank()) Text(uiState.ogStreet)
-                    },
+                    label = { Text("Calle") },
+                    placeholder = { Text("Se completará automáticamente") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    enabled = !uiState.isLoading,
+                    enabled = !uiState.isLoading && !uiState.isGeocoding,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ButtonNavy,
                         focusedLabelColor = ButtonNavy,
@@ -179,22 +199,15 @@ fun LocationScreen(
                     )
                 )
 
-                // Ciudad
+                // Ciudad (requerida)
                 OutlinedTextField(
                     value = uiState.city,
                     onValueChange = viewModel::updateCity,
-                    trailingIcon = {
-                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
-                    },
-                    label = {
-                        if (showLabel) Text("Ciudad *")
-                        else Text("Editar Ciudad")
-                    },
-                    placeholder = {
-                        if (!showLabel && uiState.ogCity.isNotBlank()) Text(uiState.ogCity)
-                    },
+                    label = { Text("Ciudad *") },
+                    placeholder = { Text("Ej: Lima") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    enabled = !uiState.isLoading && !uiState.isGeocoding,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ButtonNavy,
                         focusedLabelColor = ButtonNavy,
@@ -202,69 +215,15 @@ fun LocationScreen(
                     )
                 )
 
-                // Estado
-                OutlinedTextField(
-                    value = uiState.state,
-                    onValueChange = viewModel::updateState,
-                    trailingIcon = {
-                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
-                    },
-                    label = {
-                        if (showLabel) Text("Estado/Provincia *")
-                        else Text("Editar Estado/Provincia")
-                    },
-                    placeholder = {
-                        if (!showLabel && uiState.ogState.isNotBlank()) Text(uiState.ogState)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ButtonNavy,
-                        focusedLabelColor = ButtonNavy,
-                        cursorColor = ButtonNavy
-                    )
-                )
-
-                // ZIP
-                OutlinedTextField(
-                    value = uiState.zip.orEmpty(),
-                    onValueChange = viewModel::updateZip,
-                    trailingIcon = {
-                        if (!showLabel && !uiState.ogZip.isNullOrBlank())
-                            Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
-                    },
-                    label = {
-                        if (showLabel) Text("Código Postal")
-                        else Text("Editar Código Postal")
-                    },
-                    placeholder = {
-                        if (!showLabel && !uiState.ogZip.isNullOrBlank()) Text(uiState.ogZip!!)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ButtonNavy,
-                        focusedLabelColor = ButtonNavy,
-                        cursorColor = ButtonNavy
-                    )
-                )
-
-                // País
+                // País (requerido)
                 OutlinedTextField(
                     value = uiState.country,
                     onValueChange = viewModel::updateCountry,
-                    trailingIcon = {
-                        if (!showLabel) Icon(Icons.Default.Edit, null, Modifier.size(18.dp))
-                    },
-                    label = {
-                        if (showLabel) Text("País *")
-                        else Text("Editar País")
-                    },
-                    placeholder = {
-                        if (!showLabel && uiState.ogCountry.isNotBlank()) Text(uiState.ogCountry)
-                    },
+                    label = { Text("País *") },
+                    placeholder = { Text("Ej: Perú") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    enabled = !uiState.isLoading && !uiState.isGeocoding,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ButtonNavy,
                         focusedLabelColor = ButtonNavy,
@@ -295,10 +254,9 @@ fun LocationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            enabled = !uiState.isLoading &&
-                    (uiState.street.isNotBlank() || uiState.ogStreet.isNotBlank()) &&
+            enabled = !uiState.isLoading && 
+                    !uiState.isGeocoding &&
                     (uiState.city.isNotBlank() || uiState.ogCity.isNotBlank()) &&
-                    (uiState.state.isNotBlank() || uiState.ogState.isNotBlank()) &&
                     (uiState.country.isNotBlank() || uiState.ogCountry.isNotBlank()) &&
                     (uiState.selectedLocation != null ||
                             (uiState.ogLatitude != null && uiState.ogLongitude != null)),

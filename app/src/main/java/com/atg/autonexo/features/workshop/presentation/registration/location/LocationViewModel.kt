@@ -2,6 +2,8 @@ package com.atg.autonexo.features.workshop.presentation.registration.location
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atg.autonexo.core.geocoding.GeocodingService
+import com.atg.autonexo.core.geocoding.toAddressInfo
 import com.atg.autonexo.features.workshop.domain.models.Location
 import com.atg.autonexo.features.workshop.domain.usecases.AddLocationUseCase
 import com.atg.autonexo.features.workshop.domain.usecases.GetMyWorkshopUseCase
@@ -20,7 +22,9 @@ class LocationViewModel @Inject constructor(
     private val addLocationUseCase: AddLocationUseCase,
     private val getMyWorkshopUseCase: GetMyWorkshopUseCase,
     private val getWorkshopLocationsUseCase: GetWorkshopLocationsUseCase,
-    private val updateLocationUseCase: UpdateLocationUseCase
+    private val updateLocationUseCase: UpdateLocationUseCase,
+    private val geocodingService: GeocodingService,
+    private val mapsApiKey: String
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LocationUiState())
@@ -51,8 +55,41 @@ class LocationViewModel @Inject constructor(
             selectedLocation = latLng,
             latitude = latLng.latitude,
             longitude = latLng.longitude,
-            errorMessage = null
+            errorMessage = null,
+            isGeocoding = true
         )
+
+        // Obtener dirección automáticamente usando geocoding
+        viewModelScope.launch {
+            try {
+                val latlngString = "${latLng.latitude},${latLng.longitude}"
+                val response = geocodingService.reverseGeocode(latlngString, mapsApiKey, "es")
+                
+                if (response.status == "OK" && response.results.isNotEmpty()) {
+                    val addressInfo = response.results.first().toAddressInfo()
+                    
+                    _uiState.value = _uiState.value.copy(
+                        street = addressInfo.street,
+                        city = addressInfo.city,
+                        state = addressInfo.state,
+                        country = addressInfo.country,
+                        zip = addressInfo.zip,
+                        isGeocoding = false,
+                        errorMessage = null
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isGeocoding = false,
+                        errorMessage = "No se pudo obtener la dirección. Por favor, complétala manualmente."
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isGeocoding = false,
+                    errorMessage = "Error al obtener la dirección: ${e.message}"
+                )
+            }
+        }
     }
 
     fun clearError() {
@@ -122,24 +159,29 @@ class LocationViewModel @Inject constructor(
         val effectiveLatitude  = if (hasNewCoords) state.latitude  else state.ogLatitude  ?: 0.0
         val effectiveLongitude = if (hasNewCoords) state.longitude else state.ogLongitude ?: 0.0
 
-        if (effectiveStreet.isBlank()) {
-            _uiState.value = state.copy(errorMessage = "La calle es requerida")
-            return
-        }
-
+        // Validaciones simplificadas - solo campos esenciales
         if (effectiveCity.isBlank()) {
             _uiState.value = state.copy(errorMessage = "La ciudad es requerida")
-            return
-        }
-
-        if (effectiveStateVal.isBlank()) {
-            _uiState.value = state.copy(errorMessage = "El estado es requerido")
             return
         }
 
         if (effectiveCountry.isBlank()) {
             _uiState.value = state.copy(errorMessage = "El país es requerido")
             return
+        }
+
+        // Si no hay calle, usar una por defecto basada en las coordenadas
+        val finalStreet = if (effectiveStreet.isBlank()) {
+            "Ubicación seleccionada"
+        } else {
+            effectiveStreet
+        }
+
+        // Si no hay estado, usar la ciudad
+        val finalState = if (effectiveStateVal.isBlank()) {
+            effectiveCity
+        } else {
+            effectiveStateVal
         }
 
         if (effectiveLatitude == 0.0 && effectiveLongitude == 0.0) {
@@ -163,9 +205,9 @@ class LocationViewModel @Inject constructor(
             val location = Location(
                 id = state.locationId ?: 0L,              // 0 = crear, !=0 = actualizar
                 name = "Location",
-                street = effectiveStreet.trim(),
+                street = finalStreet.trim(),
                 city = effectiveCity.trim(),
-                state = effectiveStateVal.trim(),
+                state = finalState.trim(),
                 zip = effectiveZip?.trim(),
                 country = effectiveCountry.trim(),
                 latitude = effectiveLatitude,
