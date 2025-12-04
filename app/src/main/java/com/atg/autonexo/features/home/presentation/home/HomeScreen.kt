@@ -26,6 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import com.atg.autonexo.core.ui.theme.StatusCancelledColor
+import com.atg.autonexo.core.ui.theme.StatusCompletedColor
+import com.atg.autonexo.core.ui.theme.StatusPendingColor
+import com.atg.autonexo.core.ui.theme.StatusPendingToScheduleColor
+import com.atg.autonexo.features.matching.domain.models.Booking
+import com.atg.autonexo.features.matching.domain.models.BookingStatus
 import com.atg.autonexo.features.payment.domain.models.Payment
 import com.atg.autonexo.features.payment.domain.models.SubscriptionTier
 import com.atg.autonexo.features.payment.presentation.payment.PaymentViewModel
@@ -162,8 +168,10 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // My Requests
+
                 MyServicesSection(
+                    bookings = uiState.servicesPickedUp,
+                    isLoading = uiState.isLoadingServices,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -707,8 +715,14 @@ private fun MiWorkshopCard(
 
 @Composable
 private fun MyServicesSection(
+    bookings: List<Booking>,
+    isLoading: Boolean,
     modifier: Modifier = Modifier
 )  {
+    if (bookings.isEmpty() && !isLoading) {
+        return
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -717,50 +731,50 @@ private fun MyServicesSection(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                imageVector = Icons.Outlined.Build,
+                imageVector = Icons.Outlined.DateRange,
                 contentDescription = null,
                 tint = Color.Black.copy(alpha = 0.7f),
                 modifier = Modifier.size(24.dp)
             )
             Text(
-                text = "My Services",
+                text = "My Booking Services Completed",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 ),
                 color = TextPrimary,
             )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ServiceCard(
-                status = "Pending",
-                statusColor = StatusPending,
-                serviceTitle = "Oil Change",
-                mechanicName = "Arturo Gonzáles",
-                isPending = true
-            )
 
-            ServiceCard(
-                status = "Done",
-                statusColor = StatusDone,
-                serviceTitle = "Changing Air Filters",
-                mechanicName = "Arturo Gonzáles",
-                isPending = false
-            )
-
-            ServiceCard(
-                status = "Pending",
-                statusColor = StatusPending,
-                serviceTitle = "Brake Service",
-                mechanicName = "Arturo Gonzáles",
-                isPending = true
-            )
+            if (isLoading) {
+                Spacer(modifier = Modifier.width(8.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp
+                )
+            }
         }
+
+        if (!isLoading) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                bookings.forEach { booking ->
+                    ServiceCard(
+                        status = booking.status.toString(),
+                        statusColor = if (booking.status == BookingStatus.PICKED_UP) StatusDone else StatusPending,
+                        serviceTitle = "Booking #${booking.id}",
+                        description = booking.description,
+                        isPending = booking.status == BookingStatus.PICKED_UP
+                    )
+                }
+            }
+        }
+
+
+
     }
 }
 
@@ -769,7 +783,7 @@ private fun ServiceCard(
     status: String,
     statusColor: Color,
     serviceTitle: String,
-    mechanicName: String,
+    description: String,
     isPending: Boolean
 ) {
     Card(
@@ -824,7 +838,7 @@ private fun ServiceCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Build,
+                        imageVector = Icons.Default.DateRange,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                         tint = IconGray
@@ -839,7 +853,7 @@ private fun ServiceCard(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    imageVector = Icons.Default.Build,
+                    imageVector = Icons.Default.DateRange,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp),
                     tint = IconGray
@@ -861,7 +875,7 @@ private fun ServiceCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "By: $mechanicName",
+                    text = description,
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 11.sp
                     ),

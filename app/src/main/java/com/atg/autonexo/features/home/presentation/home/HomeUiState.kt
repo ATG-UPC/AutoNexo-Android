@@ -1,6 +1,8 @@
 package com.atg.autonexo.features.home.presentation.home
 
+import com.atg.autonexo.features.matching.domain.models.Booking
 import com.atg.autonexo.features.workshop.domain.models.Workshop
+
 
 data class HomeUiState(
     val userEmail: String? = null,
@@ -8,6 +10,9 @@ data class HomeUiState(
     val workshop: Workshop? = null,
     val hasWorkshop: Boolean = false,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val servicesPickedUp: List<Booking> = emptyList(),
+    val isLoadingServices: Boolean = false
+
 )
 
