@@ -12,11 +12,12 @@ sealed class BottomNavItem(
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 ) {
     object Home : BottomNavItem("home", "Home", Icons.Default.Home)
-    object Requests : BottomNavItem("home/requests", "Requests", Icons.Default.Notifications)
+    object Requests : BottomNavItem("home/requests", "Requests", Icons.Default.Mail)
     object Services : BottomNavItem("home/services", "Services", Icons.Default.Build)
     object WorkshopRegistration :
         BottomNavItem("workshop/registration/basic_info", "Workshop", Icons.Default.CarRepair)
 
+    object Offers : BottomNavItem("home/offers", "Offers", Icons.Default.MonetizationOn)
     object Profile : BottomNavItem("home/profile", "Profile", Icons.Default.Person)
     object Payment : BottomNavItem("payment/subscription", "Pago", Icons.Default.Payment)
 
@@ -33,7 +34,7 @@ fun BottomNavigationBar(
         BottomNavItem.Requests,
         BottomNavItem.Services,
         BottomNavItem.WorkshopRegistration,
-        BottomNavItem.Profile,
+        BottomNavItem.Offers,
     )
 
     NavigationBar(modifier = modifier) {
